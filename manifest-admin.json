@@ -1,0 +1,21 @@
+{
+  "name": "抱抱熊後台",
+  "short_name": "抱抱熊後台",
+  "start_url": "./admin.html",
+  "display": "standalone",
+  "background_color": "#FFFBF0",
+  "theme_color": "#5D4037",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
