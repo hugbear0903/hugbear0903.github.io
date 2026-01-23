@@ -1111,7 +1111,7 @@
                 }
             },
 
-            // 搜尋舊客按鈕功能 (修改版：支援多寵物選擇)
+// 搜尋舊客按鈕功能
             handleSearchOldCustomer: async function() {
                 const phoneInput = document.querySelector('input[name="ownerPhone"]');
                 const phone = phoneInput.value.trim();
@@ -1139,8 +1139,7 @@
                     if (error) throw error;
                     
                     if (data && data.length > 0) {
-                        // ★ 關鍵修改：去重邏輯
-                        // 如果同一隻寵物有多筆紀錄，只取最新的一筆
+                        // 去重邏輯：如果同一隻寵物有多筆紀錄，只取最新的一筆
                         const uniquePets = {};
                         data.forEach(record => {
                             const name = record.pet_name;
@@ -1149,10 +1148,8 @@
                             }
                         });
                         
-                        // 將物件轉回陣列
+                        // 將物件轉回陣列並渲染選單
                         const petList = Object.values(uniquePets);
-                        
-                        // ★ 關鍵修改：渲染選單彈窗
                         this.renderPetSelectionModal(petList);
                     } else {
                         this.showToast('查無此手機號碼的舊客資料', 'warning');
@@ -1710,169 +1707,145 @@ inputs.forEach(input => {
             },
 
 // 處理表單提交
-handleFormSubmit: async function(event) {
-    event.preventDefault();
-    
-    // 驗證表單
-    if (!this.validateForm()) {
-        this.showToast('請填寫所有必填欄位並完成簽名', 'error');
-        return;
-    }
-
-    // 顯示加載狀態
-    const submitBtn = document.getElementById('submitBtn');
-    const submitBtnText = document.getElementById('submitBtnText');
-    const submitBtnSpinner = document.getElementById('submitBtnSpinner');
-    
-    submitBtn.disabled = true;
-    submitBtnText.textContent = '提交中...';
-    submitBtnSpinner.classList.remove('hidden');
-
-    try {
-        // ★★★ 1. 先處理簽名上傳 ★★★
-        const base64Sign = document.getElementById('signature-data').value;
-        let signatureUrl = ""; // 預設空字串
-
-        if (base64Sign && base64Sign.startsWith('data:image')) {
-            // 顯示上傳中提示
-            this.showToast('正在上傳簽名檔...', 'info');
-            
-            try {
-                // 呼叫上傳函數並等待結果
-                signatureUrl = await this.uploadSignatureToStorage(base64Sign);
-            } catch (uploadErr) {
-                console.error('簽名上傳失敗:', uploadErr);
-                throw new Error('簽名檔上傳失敗，請重試');
-            }
-        }
-        // ★★★ 上傳結束 ★★★
-
-        // 收集表單資料
-        const formData = new FormData(document.getElementById('contractForm'));
-        
-        // 收集「本次服務內容」(複選框)
-        const services = [];
-        document.querySelectorAll('input[name="service"]:checked').forEach(checkbox => {
-            services.push(checkbox.value);
-        });
-        
-        // 準備要上傳的資料物件 (對應 Supabase 欄位)
-        const contractData = {
-            // 飼主資料
-            owner_name: formData.get('ownerName'),
-            owner_email: formData.get('ownerEmail'),
-            owner_id: formData.get('ownerId'),
-            owner_phone: formData.get('ownerPhone'),
-            owner_address: formData.get('ownerAddress'),
-            emergency_contact: formData.get('emergencyContact'),
-            emergency_phone: formData.get('emergencyPhone'),
-            hospital: formData.get('hospital'),
-            
-            // 寵物資料
-            pet_name: formData.get('petName'),
-            breed: formData.get('breed'),
-            color: formData.get('color'),
-            age: parseFloat(formData.get('age')),
-            chip_status: formData.get('chipStatus'),
-            chip_number: formData.get('chipNumber'),
-            sex: formData.get('sex'),
-            neutered: formData.get('neutered'),
-            friendly_to_people: formData.get('friendlyToPeople'),
-            friendly_to_dogs: formData.get('friendlyToDogs'),
-            aggressive: formData.get('aggressive'),
-            has_medical_history: formData.get('hasMedicalHistory'),
-            medical_history: formData.get('medicalHistory'),
-            
-            // 寵物身體狀態檢視
-            check_eye: formData.get('check_eye'),
-            eye_description: formData.get('eyeDescription'),
-            check_ear: formData.get('check_ear'),
-            ear_description: formData.get('earDescription'),
-            check_tooth: formData.get('check_tooth'),
-            tooth_description: formData.get('toothDescription'),
-            check_limb: formData.get('check_limb'),
-            limb_description: formData.get('limbDescription'),
-            check_skin: formData.get('check_skin'),
-            skin_description: formData.get('skinDescription'),
-            check_fur: formData.get('check_fur'),
-            fur_description: formData.get('furDescription'),
-            
-            // 服務內容
-            services: services, // 陣列格式
-            other_service: formData.get('otherService'),
-            pickup_time: document.getElementById('timeInput').disabled ? '另行通知' : formData.get('pickupTime'),
-            
-            // 支付資訊
-            payment: formData.get('payment'),
-            other_payment: formData.get('otherPayment'),
-            amount: parseFloat(formData.get('amount')),
-            
-            // ★★★ 2. 這裡改成存入網址 ★★★
-            signature_data: signatureUrl, 
-            
-            signature_timestamp: document.getElementById('sig-timestamp').innerText
-        };
-
-// 上傳資料到 Supabase
-        const { data, error } = await this.supabase
-            .from('contracts')
-            .insert([contractData])
-            .select();
-
-        if (error) throw error;
-
-        // ★★★ 新增：檢查 Email 是否為空 ★★★
-        const emailValue = formData.get('ownerEmail');
-        if (!emailValue || emailValue.trim() === '') {
-            // Email 為空，顯示下載頁面
-            this.showDownloadPage(contractData);
-        } else {
-            // Email 不為空，寄送副本
-            try {
-                // 1. 生成 HTML (把剛剛準備好的 contractData 傳進去)
-                const emailHtmlBody = this.generateEmailHTML(contractData);
-
-                // 2. 呼叫 Supabase Edge Function
-                const { error: funcError } = await this.supabase.functions.invoke('send-mail', {
-                    body: { 
-                        email: contractData.owner_email,
-                        owner_name: contractData.owner_name,
-                        pet_name: contractData.pet_name,
-                        htmlContent: emailHtmlBody 
-                    }
-                });
-
-                if (funcError) {
-                    console.error('Email 發送失敗:', funcError);
-                    // 這裡可以選擇不報錯，因為合約已經存了，不影響主要流程
-                } else {
-                    console.log('Email 發送成功');
+            handleFormSubmit: async function(event) {
+                event.preventDefault();
+                
+                // 驗證表單
+                if (!this.validateForm()) {
+                    this.showToast('請填寫所有必填欄位並完成簽名', 'error');
+                    return;
                 }
-            } catch (mailErr) {
-                console.error('寄信過程發生錯誤:', mailErr);
-            }
 
-            // 成功提交後的處理
-            this.showToast('契約已成功提交！感謝您的使用。', 'success');
-            
-            // 重置表單
-            document.getElementById('contractForm').reset();
-            this.resetSignature();
-            this.router('home');
-        }
-        
-    } catch (error) {
-        console.error('提交錯誤:', error);
-        this.showToast('提交失敗，請稍後再試', 'error');
-    } finally {
-        // 恢復按鈕狀態
-        submitBtn.disabled = false;
-        submitBtnText.textContent = '確認並提交';
-        submitBtnSpinner.classList.add('hidden');
-    }
-},
-// 顯示下載頁面
-showDownloadPage: function(contractData) {
+                // 顯示加載狀態
+                const submitBtn = document.getElementById('submitBtn');
+                const submitBtnText = document.getElementById('submitBtnText');
+                const submitBtnSpinner = document.getElementById('submitBtnSpinner');
+                
+                submitBtn.disabled = true;
+                submitBtnText.textContent = '提交中...';
+                submitBtnSpinner.classList.remove('hidden');
+
+                try {
+                    // 1. 先處理簽名上傳
+                    const base64Sign = document.getElementById('signature-data').value;
+                    let signatureUrl = ""; 
+
+                    if (base64Sign && base64Sign.startsWith('data:image')) {
+                        this.showToast('正在上傳簽名檔...', 'info');
+                        try {
+                            signatureUrl = await this.uploadSignatureToStorage(base64Sign);
+                        } catch (uploadErr) {
+                            console.error('簽名上傳失敗:', uploadErr);
+                            throw new Error('簽名檔上傳失敗，請重試');
+                        }
+                    }
+
+                    // 收集表單資料
+                    const formData = new FormData(document.getElementById('contractForm'));
+                    
+                    // 收集「本次服務內容」(複選框)
+                    const services = [];
+                    document.querySelectorAll('input[name="service"]:checked').forEach(checkbox => {
+                        services.push(checkbox.value);
+                    });
+                    
+                    // 準備要上傳的資料物件
+                    const contractData = {
+                        owner_name: formData.get('ownerName'),
+                        owner_email: formData.get('ownerEmail'),
+                        owner_id: formData.get('ownerId'),
+                        owner_phone: formData.get('ownerPhone'),
+                        owner_address: formData.get('ownerAddress'),
+                        emergency_contact: formData.get('emergencyContact'),
+                        emergency_phone: formData.get('emergencyPhone'),
+                        hospital: formData.get('hospital'),
+                        
+                        pet_name: formData.get('petName'),
+                        breed: formData.get('breed'),
+                        color: formData.get('color'),
+                        age: parseFloat(formData.get('age')),
+                        chip_status: formData.get('chipStatus'),
+                        chip_number: formData.get('chipNumber'),
+                        sex: formData.get('sex'),
+                        neutered: formData.get('neutered'),
+                        friendly_to_people: formData.get('friendlyToPeople'),
+                        friendly_to_dogs: formData.get('friendlyToDogs'),
+                        aggressive: formData.get('aggressive'),
+                        has_medical_history: formData.get('hasMedicalHistory'),
+                        medical_history: formData.get('medicalHistory'),
+                        
+                        check_eye: formData.get('check_eye'),
+                        eye_description: formData.get('eyeDescription'),
+                        check_ear: formData.get('check_ear'),
+                        ear_description: formData.get('earDescription'),
+                        check_tooth: formData.get('check_tooth'),
+                        tooth_description: formData.get('toothDescription'),
+                        check_limb: formData.get('check_limb'),
+                        limb_description: formData.get('limbDescription'),
+                        check_skin: formData.get('check_skin'),
+                        skin_description: formData.get('skinDescription'),
+                        check_fur: formData.get('check_fur'),
+                        fur_description: formData.get('furDescription'),
+                        
+                        services: services,
+                        other_service: formData.get('otherService'),
+                        pickup_time: document.getElementById('timeInput').disabled ? '另行通知' : formData.get('pickupTime'),
+                        
+                        payment: formData.get('payment'),
+                        other_payment: formData.get('otherPayment'),
+                        amount: parseFloat(formData.get('amount')),
+                        
+                        signature_data: signatureUrl, 
+                        signature_timestamp: document.getElementById('sig-timestamp').innerText
+                    };
+
+                    // 上傳資料到 Supabase
+                    const { data, error } = await this.supabase
+                        .from('contracts')
+                        .insert([contractData])
+                        .select();
+
+                    if (error) throw error;
+
+                    // ★★★ 修改重點：統一處理後續動作 ★★★
+                    const emailValue = formData.get('ownerEmail');
+                    const hasEmail = emailValue && emailValue.trim() !== '';
+
+                    if (hasEmail) {
+                        // Email 不為空，執行寄信 (不等待寄信結果)
+                        this.supabase.functions.invoke('send-mail', {
+                            body: { 
+                                email: contractData.owner_email,
+                                owner_name: contractData.owner_name,
+                                pet_name: contractData.pet_name,
+                                htmlContent: this.generateEmailHTML(contractData) 
+                            }
+                        }).then(({ error }) => {
+                            if (error) console.error('Email 發送失敗:', error);
+                            else console.log('Email 發送成功');
+                        });
+                    }
+
+                    // 無論有沒有 Email，統一顯示成功頁面 (傳入 hasEmail 參數)
+                    this.showToast('契約已成功提交！', 'success');
+                    this.showDownloadPage(contractData, hasEmail);
+                    
+                    // 重置表單
+                    document.getElementById('contractForm').reset();
+                    this.resetSignature();
+                    
+                } catch (error) {
+                    console.error('提交錯誤:', error);
+                    this.showToast('提交失敗，請稍後再試', 'error');
+                } finally {
+                    // 恢復按鈕狀態
+                    submitBtn.disabled = false;
+                    submitBtnText.textContent = '確認並提交';
+                    submitBtnSpinner.classList.add('hidden');
+                }
+            },
+// 顯示結果頁面 (修改版：增加 hasEmail 參數)
+showDownloadPage: function(contractData, hasEmail) {
     // 隱藏所有視圖
     const views = ['home', 'contract'];
     views.forEach(v => {
@@ -1882,65 +1855,92 @@ showDownloadPage: function(contractData) {
     
     // 顯示下載頁面視圖
     const downloadView = document.getElementById('view-download');
+    
+    // 每次都重新創建內容，確保資料是最新的
     if(downloadView) {
-        downloadView.classList.remove('hidden');
-    } else {
-        // 如果下載頁面視圖不存在，創建一個
-        this.createDownloadPage(contractData);
+        downloadView.remove(); // 移除舊的
     }
+    this.createDownloadPage(contractData, hasEmail);
     
     // 隱藏返回按鈕
     const btnBack = document.getElementById('btn-back');
     if(btnBack) btnBack.classList.add('hidden');
+    
+    // 捲動到頂部
+    window.scrollTo({top: 0, behavior: 'smooth'});
 },
-
-// 創建下載頁面
-createDownloadPage: function(contractData) {
+// 創建結果/截圖頁面
+createDownloadPage: function(contractData, hasEmail) {
     const main = document.querySelector('main');
     
+    // 根據是否有 Email 決定文案
+    const title = hasEmail ? '契約已寄出！' : '提交成功！';
+    const subTitle = hasEmail 
+        ? '副本已發送至您的信箱' 
+        : '<span class="text-red-500 font-bold">⚠️ 您未填寫信箱</span>';
+        
+    const alertBox = hasEmail
+        ? `<div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 text-sm text-blue-800">
+             <div class="font-bold flex items-center gap-2 mb-1"><i data-lucide="info" class="w-4 h-4"></i> 溫馨提醒</div>
+             建議您可截圖下方契約內容，作為雙重備份。
+           </div>`
+        : `<div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-800 animate-pulse">
+             <div class="font-bold flex items-center gap-2 mb-1"><i data-lucide="alert-triangle" class="w-4 h-4"></i> 重要請注意</div>
+             因未填寫信箱，<strong>請務必立即截圖下方契約畫面保存</strong>！<br>
+             <span class="text-xs opacity-80">(本頁面關閉後將無法再次查看)</span>
+           </div>`;
+
     // 創建下載頁面視圖
     const downloadView = document.createElement('div');
     downloadView.id = 'view-download';
-    downloadView.className = 'animate-slide-up space-y-6';
+    downloadView.className = 'animate-slide-up space-y-4';
     
     // 生成契約 HTML 內容
     const contractHtml = this.generateEmailHTML(contractData);
     
     downloadView.innerHTML = `
-        <div class="text-center pt-8 pb-6">
-            <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-theme-orange/10 flex items-center justify-center">
-                <i data-lucide="check-circle" class="w-12 h-12 text-theme-orange"></i>
+        <div class="text-center pt-6 pb-2">
+            <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-[#06C755]/10 flex items-center justify-center">
+                <i data-lucide="check" class="w-10 h-10 text-[#06C755] stroke-[3]"></i>
             </div>
-            <h2 class="text-2xl font-bold text-theme-brown mb-2">感謝您的簽署！</h2>
-            <p class="text-sm text-theme-sub">契約已成功提交並保存</p>
+            <h2 class="text-2xl font-bold text-theme-brown mb-1">${title}</h2>
+            <p class="text-sm text-theme-sub">${subTitle}</p>
         </div>
         
-        <div class="glass-panel p-6 text-center">
-            <p class="text-base text-theme-brown font-bold mb-4">如需保存副本，請點擊下方按鈕存入您的手機相簿/檔案</p>
-            
-            <button onclick="app.downloadContract()" class="w-full bg-theme-brown text-white py-4 rounded-xl font-bold shadow-lg shadow-theme-brown/20 tracking-widest text-lg flex items-center justify-center gap-2 mb-4">
-                <i data-lucide="download" class="w-5 h-5"></i>
-                <span>下載至手機</span>
-            </button>
+        <div class="px-2">
+            ${alertBox}
         </div>
         
-        <div class="text-center">
-            <button onclick="app.router('home')" class="text-theme-sub font-bold text-sm flex items-center justify-center gap-1 mx-auto">
+        <div class="relative w-full bg-white shadow-2xl rounded-none mx-auto overflow-hidden border border-gray-200" style="max-width: 600px;">
+            <div class="bg-gray-100 px-4 py-2 text-xs text-gray-500 font-bold border-b flex justify-between items-center">
+                <span>契約預覽</span>
+                <span>▼ 下滑查看完整內容</span>
+            </div>
+            <iframe id="contract-frame" class="w-full h-[60vh] bg-white block" frameborder="0"></iframe>
+        </div>
+
+        <div class="text-center pb-10 pt-4">
+            <button onclick="app.router('home')" class="bg-theme-brown text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-theme-brown/20 flex items-center justify-center gap-2 mx-auto active:scale-95 transition-transform">
                 <i data-lucide="home" class="w-4 h-4"></i>
-                <span>返回首頁</span>
+                <span>返回首頁 (完成)</span>
             </button>
+            <p class="text-xs text-gray-400 mt-3">點擊返回後，資料將會重置</p>
         </div>
-        
-        <!-- 隱藏的契約內容，用於生成下載檔案 -->
-        <div id="contract-content" class="hidden">${contractHtml}</div>
     `;
     
     // 添加到主內容區域
     main.appendChild(downloadView);
     
     // 初始化圖標
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // 將 HTML 內容寫入 iframe
+    const frame = document.getElementById('contract-frame');
+    if (frame) {
+        const doc = frame.contentWindow.document;
+        doc.open();
+        doc.write(contractHtml);
+        doc.close();
     }
 },
 
