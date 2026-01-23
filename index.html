@@ -70,18 +70,6 @@
             border-radius: 20px;
         }
 
-        /* 價格表樣式 */
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed #E0E0E0;
-        }
-        .price-row:last-child { border-bottom: none; }
-        .price-label { font-size: 0.9rem; font-weight: 700; color: #5D4037; }
-        .price-val { font-size: 0.95rem; font-weight: 700; color: #D98E4F; font-family: 'Noto Sans TC'; }
-
         /* 輸入框 */
         .input-minimal {
             width: 100%;
@@ -136,7 +124,7 @@
 
     <main class="flex-1 w-full relative z-10 pt-20 px-5 safe-pb">
 
-        <div id="view-home" class="animate-slide-up space-y-6">
+<div id="view-home" class="animate-slide-up space-y-6">
             
             <div class="w-full glass-panel p-8 text-center relative overflow-hidden group cursor-default border-none ring-4 ring-white/50 mt-4">
                 <div class="relative z-10 flex flex-col items-center">
@@ -149,22 +137,13 @@
                         Pet Life Style
                     </span>
 
-                    <div class="w-full space-y-3">
-                        <button onclick="router('contract')" class="w-full bg-theme-brown text-white py-4 rounded-xl font-bold shadow-lg shadow-theme-brown/20 active:scale-95 transition-all flex items-center justify-center gap-2 group">
-                            <span>填寫美容契約</span>
-                            <i data-lucide="pen-tool" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                    <div class="w-full space-y-5">
+                        <button onclick="router('contract')" class="w-full bg-theme-brown text-white py-5 rounded-2xl font-bold shadow-xl shadow-theme-brown/20 active:scale-95 transition-all flex items-center justify-center gap-3 group text-lg relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                            <i data-lucide="pen-tool" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                            <span>開始填寫契約</span>
                         </button>
                         
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="router('prices')" class="bg-white text-theme-brown border border-theme-brown/10 py-4 rounded-xl font-bold shadow-sm active:scale-95 transition-all flex flex-col items-center justify-center gap-1 hover:border-theme-orange/50">
-                                <i data-lucide="tag" class="w-5 h-5 text-theme-orange"></i>
-                                <span class="text-sm">服務價目</span>
-                            </button>
-                            <a href="tel:033610225" class="bg-white text-theme-brown border border-theme-brown/10 py-4 rounded-xl font-bold shadow-sm active:scale-95 transition-all flex flex-col items-center justify-center gap-1 hover:border-theme-orange/50">
-                                <i data-lucide="phone" class="w-5 h-5 text-theme-orange"></i>
-                                <span class="text-sm">預約專線</span>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -183,176 +162,7 @@
             </div>
         </div>
 
-        <div id="view-prices" class="hidden animate-slide-up space-y-6">
-            
-            <div class="text-center">
-                <h2 class="text-2xl font-bold text-theme-brown">服務價目表</h2>
-                <p class="text-xs text-theme-sub mt-1">實際收費依照現場狀況報價而定</p>
-            </div>
-
-            <div class="sticky top-[70px] z-20 bg-[#FFFBF0]/95 backdrop-blur-md py-2 -mx-5 px-5 shadow-sm">
-                <div class="flex gap-2 overflow-x-auto hide-scrollbar">
-                    <button onclick="switchTab('small')" class="tab-btn tab-active px-5 py-2.5 rounded-full border text-sm font-bold whitespace-nowrap transition-all shadow-sm flex-shrink-0" data-target="small">小型犬</button>
-                    <button onclick="switchTab('medium')" class="tab-btn tab-inactive px-5 py-2.5 rounded-full border text-sm font-bold whitespace-nowrap transition-all shadow-sm flex-shrink-0" data-target="medium">中型犬</button>
-                    <button onclick="switchTab('large')" class="tab-btn tab-inactive px-5 py-2.5 rounded-full border text-sm font-bold whitespace-nowrap transition-all shadow-sm flex-shrink-0" data-target="large">大型犬</button>
-                    <button onclick="switchTab('cat')" class="tab-btn tab-inactive px-5 py-2.5 rounded-full border text-sm font-bold whitespace-nowrap transition-all shadow-sm flex-shrink-0" data-target="cat">貓咪</button>
-                </div>
-            </div>
-
-            <div id="price-content-container" class="min-h-[300px]">
-                
-                <div id="content-small" class="price-section space-y-4">
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <div class="flex items-center gap-2 mb-2">
-                            <h3 class="font-bold text-theme-brown">小型 (<5KG) / 中小型 (5-10KG)</h3>
-                        </div>
-                        <p class="text-xs text-theme-sub mb-3 opacity-80 leading-relaxed">
-                            吉娃娃、馬爾濟斯、約克夏、博美、西施、臘腸、貴賓、雪納瑞、西高地白梗
-                        </p>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$400 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$900 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (含美容)</span><span class="price-val">$1,800 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$500 / 晚</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="content-medium" class="price-section hidden space-y-4">
-                    
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-theme-brown mb-3">法國鬥牛 (法鬥)</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$500 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (含美容)</span><span class="price-val">$1,800 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$700 / 晚</span></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-theme-brown mb-3">狐狸犬</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$550 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$1,100 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (純洗澡)</span><span class="price-val">$2,000 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$700 / 晚</span></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-theme-brown mb-3">柴犬 / 柯基</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$600 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$1,200 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (純洗澡)</span><span class="price-val">$2,200 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$700 / 晚</span></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-theme-brown mb-3">比熊</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$500 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$1,000 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (純洗澡)</span><span class="price-val">$1,800 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (含美容)</span><span class="price-val">$2,200 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$500 / 晚</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="content-large" class="price-section hidden space-y-4">
-                    
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-theme-brown mb-3">邊境牧羊犬 / 拉布拉多</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$800 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$1,600 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (純洗澡)</span><span class="price-val">$3,000 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$900 / 晚</span></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-theme-orange/30">
-                        <h3 class="font-bold text-theme-brown mb-3">黃金獵犬</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$1,200 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$2,400 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (純洗澡)</span><span class="price-val">$4,600 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$900 / 晚</span></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-theme-orange/30">
-                        <h3 class="font-bold text-theme-brown mb-3">哈士奇</h3>
-                        <div class="space-y-1">
-                            <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$1,400 起</span></div>
-                            <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$2,500 起</span></div>
-                            <div class="price-row"><span class="price-label">包月 (純洗澡)</span><span class="price-val">$5,400 起</span></div>
-                            <div class="price-row"><span class="price-label">住宿費用</span><span class="price-val">$900 / 晚</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="content-cat" class="price-section hidden space-y-4">
-                    <div class="glass-panel p-5 relative overflow-hidden">
-                        <i data-lucide="cat" class="absolute -right-5 -bottom-5 w-32 h-32 text-theme-brown/5"></i>
-                        
-                        <div class="space-y-6 relative z-10">
-                            <div>
-                                <h4 class="font-bold text-theme-brown mb-2 border-l-4 border-theme-orange pl-2">短毛貓</h4>
-                                <div class="bg-white/60 rounded-lg p-3 space-y-1">
-                                    <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$500 起</span></div>
-                                    <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$1,200 起</span></div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <h4 class="font-bold text-theme-brown mb-2 border-l-4 border-theme-orange pl-2">中長 / 長毛貓</h4>
-                                <div class="bg-white/60 rounded-lg p-3 space-y-1">
-                                    <div class="price-row"><span class="price-label">小美容</span><span class="price-val">$600 - 700 起</span></div>
-                                    <div class="price-row"><span class="price-label">大美容</span><span class="price-val">$1,400 起</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="mt-8">
-                <div class="flex items-center gap-2 mb-3 px-1">
-                    <i data-lucide="file-text" class="w-5 h-5 text-theme-orange"></i>
-                    <h2 class="text-lg font-bold text-theme-brown">美容須知與規則</h2>
-                </div>
-                
-                <div class="space-y-3">
-                    <div class="glass-panel overflow-hidden">
-                        <button onclick="toggleAccordion('rule1')" class="w-full p-4 flex justify-between items-center text-left hover:bg-white/50 transition">
-                            <span class="font-bold text-sm text-theme-brown">小美容 vs 大美容 包含項目</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-theme-sub transition-transform" id="icon-rule1"></i>
-                        </button>
-                        <div id="rule1" class="hidden px-4 pb-4 text-xs text-theme-sub leading-loose border-t border-theme-brown/5 bg-white/30">
-                            <p>● <strong>小美容：</strong>剪指甲、剃腳底毛、清耳朵、擠肛門腺、剃屁股毛、稍修臉及腳圓。</p>
-                            <p class="mt-2">● <strong>大美容：</strong>含小美容全項 + 依毛孩現況配合飼主需求做造型修剪。</p>
-                            <p class="mt-2 text-theme-orange">※ 若需拆結、除廢毛、除蚤、藥浴、刷牙等，費用另計。</p>
-                        </div>
-                    </div>
-
-                    <div class="glass-panel overflow-hidden">
-                        <button onclick="toggleAccordion('rule2')" class="w-full p-4 flex justify-between items-center text-left hover:bg-white/50 transition">
-                            <span class="font-bold text-sm text-theme-brown">包月與住宿規則</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-theme-sub transition-transform" id="icon-rule2"></i>
-                        </button>
-                        <div id="rule2" class="hidden px-4 pb-4 text-xs text-theme-sub leading-loose border-t border-theme-brown/5 bg-white/30">
-                            <p>● <strong>包月期限：</strong>40天 (逾期無包月優惠，且不主動通知)。</p>
-                            <p class="mt-2">● <strong>住宿限制：</strong>不提供 12 歲以上、無定期在本館美容之毛孩住宿。</p>
-                            <p class="mt-2">● <strong>安親評估：</strong>住宿需提前安親 2 小時評估適應狀況。</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div id="view-prices" class="hidden"></div>
 
         <div id="view-contract" class="hidden animate-slide-up">
             <div class="text-center mb-6">
@@ -645,20 +455,6 @@
         </div>
     </div>
 
-    <div class="fixed bottom-0 w-full max-w-lg bg-white/95 backdrop-blur-lg border-t border-theme-brown/10 flex justify-around py-2 z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
-        <button onclick="router('home')" class="nav-item flex flex-col items-center gap-1 p-2 text-theme-sub transition-colors nav-item-active" id="nav-home">
-            <i data-lucide="store" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold">首頁</span>
-        </button>
-        <button onclick="router('prices')" class="nav-item flex flex-col items-center gap-1 p-2 text-theme-sub transition-colors" id="nav-prices">
-            <i data-lucide="file-text" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold">價目表</span>
-        </button>
-        <a href="https://line.me/R/ti/p/%40lpg5715b" target="_blank" class="nav-item flex flex-col items-center gap-1 p-2 text-theme-sub transition-colors hover:text-[#06C755]">
-            <i data-lucide="message-circle" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold">Line 預約</span>
-        </a>
-    </div>
 
     <script>
         lucide.createIcons();
@@ -670,48 +466,24 @@
             dateDisplay.innerText = `日期：${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
         }
 
-        // 頁面路由與導航狀態切換
+// 頁面路由與導航狀態切換
         function router(page) {
             window.scrollTo({top: 0, behavior: 'smooth'});
             
-            const views = ['home', 'prices', 'contract'];
+            const views = ['home', 'contract']; // 已移除 prices
             views.forEach(v => {
                 const el = document.getElementById('view-' + v);
-                if(v === page) el.classList.remove('hidden');
-                else el.classList.add('hidden');
+                if(el) {
+                    if(v === page) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
             });
 
             const btnBack = document.getElementById('btn-back');
             if(page === 'home') btnBack.classList.add('hidden');
             else btnBack.classList.remove('hidden');
 
-            // 更新底部導航狀態
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-item-active'));
-            if(page === 'home') document.getElementById('nav-home').classList.add('nav-item-active');
-            if(page === 'prices') document.getElementById('nav-prices').classList.add('nav-item-active');
         }
-
-        // 價目表 Tab 切換邏輯
-        function switchTab(target) {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                if(btn.dataset.target === target) {
-                    btn.classList.add('tab-active');
-                    btn.classList.remove('tab-inactive');
-                } else {
-                    btn.classList.add('tab-inactive');
-                    btn.classList.remove('tab-active');
-                }
-            });
-
-            document.querySelectorAll('.price-section').forEach(el => el.classList.add('hidden'));
-            const activeContent = document.getElementById('content-' + target);
-            activeContent.classList.remove('hidden');
-            
-            activeContent.classList.remove('animate-fade-in');
-            void activeContent.offsetWidth; 
-            activeContent.classList.add('animate-fade-in');
-        }
-
         // 摺疊選單
         function toggleAccordion(id) {
             const el = document.getElementById(id);
@@ -897,5 +669,22 @@
             }
         });
     </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+            try {
+                const registration = await navigator.serviceWorker.register('./sw.js');
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload();
+                        }
+                    });
+                });
+            } catch (e) { console.error('SW Error:', e); }
+        });
+    }
+</script>
 </body>
 </html>
