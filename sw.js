@@ -1,11 +1,11 @@
-const CACHE_NAME = 'hugbear-v1';
+const CACHE_NAME = 'hugbear-v2';
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/logo.png',
-    '/line.png',
-    '/linepay.png',
-    '/manifest.json'
+    './',
+    './index.html',
+    './logo.png',
+    './line.png',
+    './linepay.png',
+    './manifest.json'
 ];
 
 // 安裝 Service Worker

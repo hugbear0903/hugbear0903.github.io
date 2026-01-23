@@ -352,7 +352,7 @@
             <div class="w-full glass-panel p-8 text-center relative overflow-hidden group cursor-default border-none ring-4 ring-white/50 mt-4">
                 <div class="relative z-10 flex flex-col items-center">
 <div class="w-48 h-48 mb-4 hover:scale-105 transition duration-500 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white cursor-pointer"
-     ondblclick="window.location.href='admin.html'">
+     onclick="app.handleSecretAdminEntry()">
     <img src="logo.png" alt="Logo" class="w-full h-full object-cover" loading="lazy">
 </div>
                     
@@ -1042,7 +1042,32 @@
                 // 註冊 Service Worker
                 this.registerServiceWorker();
             },
+// === 管理員後門邏輯 (解決手機雙擊問題) ===
+            adminClickCount: 0,
+            adminClickTimer: null,
 
+            handleSecretAdminEntry: function() {
+                this.adminClickCount++;
+                
+                // 如果是第一次點擊，設定計時器，超過 0.5 秒沒點第二次就重置
+                if (this.adminClickCount === 1) {
+                    this.adminClickTimer = setTimeout(() => {
+                        this.adminClickCount = 0;
+                    }, 500); // 500毫秒內要點完
+                }
+
+                // 如果累積點擊達到 2 次 (原本的雙擊)
+                // 建議改成 5 次比較不會被誤觸，如果你想維持雙擊就寫 >= 2
+                if (this.adminClickCount >= 2) {
+                    clearTimeout(this.adminClickTimer);
+                    this.adminClickCount = 0;
+                    
+                    // 增加震動回饋 (僅 Android 有效，增加手感)
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    
+                    window.location.href = 'admin.html';
+                }
+            },
             // 路由功能
             router: function(page) {
                 window.scrollTo({top: 0, behavior: 'smooth'});

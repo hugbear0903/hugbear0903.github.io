@@ -2,14 +2,15 @@
   "name": "抱抱熊寵物生活館",
   "short_name": "抱抱熊",
   "description": "抱抱熊寵物生活館提供專業寵物美容服務，包括洗澡、美容、修剪等項目，讓您的愛寵煥然一新。",
-  "start_url": "/index.html",
+  "start_url": "./index.html",  
   "display": "standalone",
   "background_color": "#FFFBF0",
   "theme_color": "#FFFBF0",
   "orientation": "portrait",
+  "scope": ".",                 
   "icons": [
     {
-      "src": "logo.png",
+      "src": "logo.png",       
       "sizes": "192x192",
       "type": "image/png"
     },
