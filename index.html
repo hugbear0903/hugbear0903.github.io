@@ -437,9 +437,18 @@
                         <div>
                             <label>支付方式<span class="text-theme-orange">*</span></label>
                             <div class="space-y-2 mt-2">
-                                <div class="flex gap-2 radio-btn-group">
-                                    <label class="flex-1 cursor-pointer"><input type="radio" name="payment" value="現金" class="hidden"><div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange">現金</div></label>
-                                    <label class="flex-1 cursor-pointer"><input type="radio" name="payment" value="信用卡" class="hidden"><div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange">信用卡</div></label>
+<div class="flex gap-2 radio-btn-group">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="payment" value="現金" class="hidden">
+                                        <div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange transition-all">現金</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="payment" value="LinePay" class="hidden">
+                                        <div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange flex items-center justify-center gap-2 transition-all">
+                                            <img src="linepay.png" alt="LinePay" class="h-4 object-contain">
+                                            <span></span>
+                                        </div>
+                                    </label>
                                 </div>
                                 <div class="flex items-center gap-2 radio-btn-group">
                                     <label class="cursor-pointer shrink-0"><input type="radio" name="payment" value="其他" class="hidden"><div class="px-4 py-2 border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange">其他</div></label>
