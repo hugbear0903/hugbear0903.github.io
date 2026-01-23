@@ -112,6 +112,7 @@
                 }
             }
         }
+        
     </script>
 
     <style>
@@ -430,11 +431,11 @@
                             <input type="text" name="ownerName" class="input-minimal" required>
                             <div class="error-message">請輸入飼主姓名</div>
                         </div>
-                        <div>
-                            <label>電子信箱<span class="text-theme-orange">*</span></label>
-                            <input type="email" name="ownerEmail" class="input-minimal" required>
-                            <div class="error-message">請輸入有效的電子信箱</div>
-                        </div>
+<div>
+    <label>電子信箱</label>
+    <input type="email" name="ownerEmail" class="input-minimal" placeholder="選填，用於接收契約副本">
+    <div class="error-message">請輸入有效的電子信箱</div>
+</div>
                         <div>
                             <label>身分證字號<span class="text-theme-orange">*</span></label>
                             <input type="text" name="ownerId" class="input-minimal" required pattern="[A-Z][12]\d{8}">
@@ -1110,82 +1111,127 @@
                 }
             },
 
-            // 搜尋舊客按鈕功能
+            // 搜尋舊客按鈕功能 (修改版：支援多寵物選擇)
             handleSearchOldCustomer: async function() {
                 const phoneInput = document.querySelector('input[name="ownerPhone"]');
-                const phone = phoneInput.value;
+                const phone = phoneInput.value.trim();
                 
                 if (!phone || phone.length !== 10) {
-                    this.showToast('請先輸入有效的手機號碼', 'error');
+                    this.showToast('請先輸入有效的手機號碼 (10碼)', 'error');
                     return;
                 }
                 
+                // 顯示按鈕 Loading 狀態
+                const btn = document.querySelector('button[onclick="app.handleSearchOldCustomer()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
+                btn.disabled = true;
+                lucide.createIcons();
+
                 try {
-                    this.showToast('正在查詢舊客資料...', 'info');
-                    
                     // 查詢資料庫中是否有相同手機號碼的客戶
                     const { data, error } = await this.supabase
                         .from('contracts')
                         .select('*')
                         .eq('owner_phone', phone)
-                        .order('created_at', { ascending: false })
-                        .limit(1);
+                        .order('created_at', { ascending: false });
                     
                     if (error) throw error;
                     
                     if (data && data.length > 0) {
-                        // 找到舊客資料，自動填入表單
-                        const customerData = data[0];
-                        
-                        // 填入飼主資料
-                        document.querySelector('input[name="ownerName"]').value = customerData.owner_name || '';
-                        document.querySelector('input[name="ownerEmail"]').value = customerData.owner_email || '';
-                        document.querySelector('input[name="ownerId"]').value = customerData.owner_id || '';
-                        document.querySelector('input[name="ownerAddress"]').value = customerData.owner_address || '';
-                        document.querySelector('input[name="emergencyContact"]').value = customerData.emergency_contact || '';
-                        document.querySelector('input[name="emergencyPhone"]').value = customerData.emergency_phone || '';
-                        document.querySelector('input[name="hospital"]').value = customerData.hospital || '';
-                        
-                        // 填入寵物資料
-                        document.querySelector('input[name="petName"]').value = customerData.pet_name || '';
-                        document.querySelector('input[name="breed"]').value = customerData.breed || '';
-                        document.querySelector('input[name="color"]').value = customerData.color || '';
-                        document.querySelector('input[name="age"]').value = customerData.age || '';
-                        
-                        // 處理晶片狀態
-                        const chipSelect = document.getElementById('chipSelect');
-                        const chipInput = document.getElementById('chipInput');
-                        if (customerData.chip_status) {
-                            chipSelect.value = customerData.chip_status;
-                            this.toggleChipInput(); // 觸發 UI 更新
-                            if (customerData.chip_status === 'has' && customerData.chip_number) {
-                                chipInput.value = customerData.chip_number;
+                        // ★ 關鍵修改：去重邏輯
+                        // 如果同一隻寵物有多筆紀錄，只取最新的一筆
+                        const uniquePets = {};
+                        data.forEach(record => {
+                            const name = record.pet_name;
+                            if (!uniquePets[name]) {
+                                uniquePets[name] = record;
                             }
-                        }
+                        });
                         
-                        // 處理 Radio 按鈕 (性別、結紮、親人、親狗、攻擊性)
-                        this.setRadioValue('sex', customerData.sex);
-                        this.setRadioValue('neutered', customerData.neutered);
-                        this.setRadioValue('friendlyToPeople', customerData.friendly_to_people);
-                        this.setRadioValue('friendlyToDogs', customerData.friendly_to_dogs);
-                        this.setRadioValue('aggressive', customerData.aggressive);
-                        this.setRadioValue('hasMedicalHistory', customerData.has_medical_history);
+                        // 將物件轉回陣列
+                        const petList = Object.values(uniquePets);
                         
-                        // 填入病史描述
-                        if (customerData.medical_history) {
-                            document.querySelector('input[name="medicalHistory"]').value = customerData.medical_history;
-                        }
-                        
-                        this.showToast('已載入舊客資料！', 'success');
+                        // ★ 關鍵修改：渲染選單彈窗
+                        this.renderPetSelectionModal(petList);
                     } else {
-                        this.showToast('找不到相符的舊客資料', 'warning');
+                        this.showToast('查無此手機號碼的舊客資料', 'warning');
                     }
                 } catch (error) {
                     console.error('查詢錯誤:', error);
                     this.showToast('查詢失敗，請稍後再試', 'error');
+                } finally {
+                    // 恢復按鈕狀態
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    lucide.createIcons();
                 }
             },
-            
+
+                     // 輔助函數：渲染寵物選擇列表
+            renderPetSelectionModal: function(pets) {
+                const modal = document.getElementById('petSelectModal');
+                const container = document.getElementById('petListContainer');
+                const content = document.getElementById('petSelectContent');
+                
+                container.innerHTML = ''; // 清空舊內容
+
+                pets.forEach(pet => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-theme-orange hover:shadow-md hover:bg-theme-orange/5 transition-all group relative overflow-hidden';
+                    btn.onclick = () => {
+                        this.fillFormWithData(pet); // 點擊後填入資料
+                        this.closePetSelectModal(); // 關閉彈窗
+                        this.showToast(`已載入 ${pet.pet_name} 的資料`, 'success');
+                    };
+
+                    // 將日期轉成 YYYY/MM/DD 格式
+                    const dateObj = new Date(pet.created_at);
+                    const dateStr = `${dateObj.getFullYear()}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
+
+                    btn.innerHTML = `
+                        <div class="flex items-center justify-between relative z-10">
+                            <div>
+                                <span class="block text-lg font-bold text-theme-brown group-hover:text-theme-orange transition-colors">${pet.pet_name}</span>
+                                <span class="text-xs text-theme-sub">上次服務：${dateStr}</span>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-theme-orange group-hover:text-white transition-colors">
+                                <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(btn);
+                });
+
+                // 顯示彈窗
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // 鎖定背景捲動
+                lucide.createIcons();
+
+                // 動畫
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }, 10);
+            },
+
+            // 輔助函數：關閉寵物選擇彈窗
+            closePetSelectModal: function() {
+                const modal = document.getElementById('petSelectModal');
+                const content = document.getElementById('petSelectContent');
+                
+                modal.classList.add('opacity-0');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+                
+                document.body.style.overflow = ''; // 解除鎖定
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            },
+   
             // 輔助函數：設定 Radio 按鈕的值
             setRadioValue: function(name, value) {
                 if (!value) return;
@@ -1195,6 +1241,115 @@
                         radio.checked = true;
                     }
                 });
+            },
+            // 輔助函數：填寫表單資料
+            fillFormWithData: function(data) {
+                // 1. 填入飼主資料
+                document.querySelector('input[name="ownerName"]').value = data.owner_name || '';
+                document.querySelector('input[name="ownerEmail"]').value = data.owner_email || '';
+                document.querySelector('input[name="ownerId"]').value = data.owner_id || '';
+                document.querySelector('input[name="ownerAddress"]').value = data.owner_address || '';
+                document.querySelector('input[name="emergencyContact"]').value = data.emergency_contact || '';
+                document.querySelector('input[name="emergencyPhone"]').value = data.emergency_phone || '';
+                document.querySelector('input[name="hospital"]').value = data.hospital || '';
+
+                // 2. 填入寵物資料
+                document.querySelector('input[name="petName"]').value = data.pet_name || '';
+                document.querySelector('input[name="breed"]').value = data.breed || '';
+                document.querySelector('input[name="color"]').value = data.color || '';
+                document.querySelector('input[name="age"]').value = data.age || '';
+                
+                // 3. 處理晶片狀態
+                const chipSelect = document.getElementById('chipSelect');
+                const chipInput = document.getElementById('chipInput');
+                
+                // 判斷資料庫回傳的晶片狀態
+                let chipStatus = 'has'; // 預設為有晶片
+                if (data.chip_status === 'unknown' || data.chip_number === '') {
+                    chipStatus = 'unknown';
+                } else if (data.chip_status === 'none' || !data.chip_number) {
+                    chipStatus = 'none';
+                }
+                
+                chipSelect.value = chipStatus;
+                this.toggleChipInput(); // 觸發 UI 更新 (顯示/隱藏輸入框)
+                
+                if (chipStatus === 'has' && data.chip_number) {
+                    chipInput.value = data.chip_number;
+                } else {
+                    chipInput.value = '';
+                }
+                
+                // 4. 處理 Radio 按鈕 (性別、結紮、親人、親狗、攻擊性、病史)
+                this.setRadioValue('sex', data.sex);
+                this.setRadioValue('neutered', data.neutered);
+                this.setRadioValue('friendlyToPeople', data.friendly_to_people);
+                this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
+                this.setRadioValue('aggressive', data.aggressive);
+                this.setRadioValue('hasMedicalHistory', data.has_medical_history);
+                
+                // 5. 填入病史描述
+                document.querySelector('input[name="medicalHistory"]').value = data.medical_history || '';
+
+                // 6. 處理接回時間
+                const timeInput = document.getElementById('timeInput');
+                const notifyBtn = document.getElementById('btn-notify');
+                
+                // 如果是 '另行通知' 或類似字串，切換到另行通知模式
+                if (data.pickup_time && data.pickup_time.includes('另行通知')) {
+                    // 如果按鈕目前不是激活狀態，就點擊它
+                    if (!notifyBtn.classList.contains('bg-theme-orange')) {
+                        this.toggleTime();
+                    }
+                } else {
+                    // 如果按鈕目前是激活狀態，就點擊它切換回時間選擇
+                    if (notifyBtn.classList.contains('bg-theme-orange')) {
+                        this.toggleTime();
+                    }
+                    timeInput.value = data.pickup_time || '';
+                }
+            },
+            // === 新增：簽名上傳相關方法 ===
+
+            // 輔助函數：將 Base64 請求轉換成 File 物件
+            dataURLtoFile: function(dataurl, filename) {
+                let arr = dataurl.split(','),
+                    mime = arr[0].match(/:(.*?);/)[1],
+                    bstr = atob(arr[1]),
+                    n = bstr.length,
+                    u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new File([u8arr], filename, { type: mime });
+            },
+
+            // 輔助函數：上傳簽名到 Supabase Storage
+            uploadSignatureToStorage: async function(base64Data) {
+                const file = this.dataURLtoFile(base64Data, `sign_${Date.now()}.png`);
+                // 檔名格式：signatures/時間戳記_亂數.png
+const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+
+                try {
+                    // 上傳到 'signatures' bucket
+                    const { data, error } = await this.supabase
+                        .storage
+                        .from('signatures')
+                        .upload(fileName, file);
+
+                    if (error) throw error;
+
+                    // 取得公開網址
+                    const { data: { publicUrl } } = this.supabase
+                        .storage
+                        .from('signatures')
+                        .getPublicUrl(fileName);
+
+                    return publicUrl;
+                } catch (error) {
+                    console.error("簽名上傳失敗:", error);
+                    throw error; // 讓錯誤繼續往外拋，以便在 handleFormSubmit 捕獲
+                }
             },
 
 
@@ -1341,38 +1496,156 @@
                 }
             },
 
-            // 表單驗證
+            // 表單驗證 (強化版)
             validateForm: function() {
                 const form = document.getElementById('contractForm');
-                const inputs = form.querySelectorAll('input[required], select[required]');
                 let isValid = true;
+                let firstErrorInput = null;
 
-                inputs.forEach(input => {
-                    if (!input.checkValidity()) {
+// --- 1. 基礎欄位驗證 (利用 HTML5 checkValidity) ---
+// 這會檢查所有有 required 屬性的 input, select, textarea
+const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+
+inputs.forEach(input => {
+    // 先移除舊的錯誤樣式
+    input.classList.remove('input-error');
+    
+    // 特別處理 Email 欄位：只有在有值時才驗證格式
+    if (input.name === 'ownerEmail' && input.value.trim() !== '') {
+        if (!input.checkValidity()) {
+            isValid = false;
+            input.classList.add('input-error');
+            
+            // 記錄第一個錯誤位置，方便稍後捲動
+            if (!firstErrorInput) firstErrorInput = input;
+
+            // 監聽輸入，一修正就移除紅框
+            input.addEventListener('input', function() {
+                if (this.checkValidity() || this.value.trim() === '') {
+                    this.classList.remove('input-error');
+                }
+            }, { once: true });
+        }
+    } else if (input.name !== 'ownerEmail') {
+        // 非 Email 欄位的正常驗證
+        if (!input.checkValidity()) {
+            isValid = false;
+            input.classList.add('input-error');
+            
+            // 記錄第一個錯誤位置，方便稍後捲動
+            if (!firstErrorInput) firstErrorInput = input;
+
+            // 監聽輸入，一修正就移除紅框
+            input.addEventListener('input', function() {
+                if (this.checkValidity()) {
+                    this.classList.remove('input-error');
+                }
+            }, { once: true });
+        }
+    }
+});
+
+                // --- 2. 進階邏輯驗證 (補足 HTML5 做不到的事) ---
+
+                // A. 檢查「本次服務內容」是否至少選一項
+                const services = document.querySelectorAll('input[name="service"]:checked');
+                if (services.length === 0) {
+                    isValid = false;
+                    const serviceSection = document.querySelector('input[name="service"]').closest('section');
+                    serviceSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    this.showToast('請至少選擇一項服務內容', 'error');
+                    return false; // 直接返回，因為已經捲動了
+                }
+
+                // B. 檢查「支付方式」是否已選
+                const payment = document.querySelector('input[name="payment"]:checked');
+                if (!payment) {
+                    isValid = false;
+                    const paymentSection = document.querySelector('input[name="payment"]').closest('section');
+                    if (!firstErrorInput) firstErrorInput = paymentSection;
+                }
+
+                // C. 檢查「支付金額」是否大於 0
+                const amountInput = document.querySelector('input[name="amount"]');
+                const amountVal = parseFloat(amountInput.value);
+                if (isNaN(amountVal) || amountVal <= 0) {
+                    isValid = false;
+                    amountInput.classList.add('input-error');
+                    if (!firstErrorInput) firstErrorInput = amountInput;
+                }
+
+                // D. 檢查「同意條款」是否已勾選
+                const termsCheck = document.getElementById('termsCheck');
+                if (!termsCheck || !termsCheck.checked) {
+                    isValid = false;
+                    const termsSection = document.getElementById('termsCheck').closest('section');
+                    if (!firstErrorInput) firstErrorInput = termsSection;
+                }
+
+                // E. 檢查「晶片號碼」：如果選了有晶片，必須填號碼
+                const chipStatus = document.getElementById('chipSelect').value;
+                const chipInput = document.getElementById('chipInput');
+                if (chipStatus === 'has' && (!chipInput.value || chipInput.value.trim() === '')) {
+                    isValid = false;
+                    chipInput.classList.add('input-error');
+                    if (!firstErrorInput) firstErrorInput = chipInput;
+                }
+
+                // F. 檢查「身體狀態異常描述」：如果選了異常，必須填描述
+                const checkItems = ['eye', 'ear', 'tooth', 'limb', 'skin', 'fur'];
+                checkItems.forEach(item => {
+                    const radioVal = document.querySelector(`input[name="check_${item}"]:checked`)?.value;
+                    const descInput = document.querySelector(`input[name="${item}Description"]`);
+                    
+                    if (radioVal === '異常' && (!descInput.value || descInput.value.trim() === '')) {
                         isValid = false;
-                        input.classList.add('input-error');
-                        
-                        // 添加輸入事件監聽器，當用戶開始輸入時移除錯誤狀態
-                        input.addEventListener('input', function() {
-                            if (this.checkValidity()) {
-                                this.classList.remove('input-error');
-                            }
-                        }, { once: true });
-                    } else {
-                        input.classList.remove('input-error');
+                        descInput.classList.add('input-error');
+                        if (!firstErrorInput) firstErrorInput = descInput;
                     }
                 });
+                // G. 檢查「預計接回時間」
+                const timeInput = document.getElementById('timeInput');
+                const notifyBtn = document.getElementById('btn-notify');
+                
+                // 判斷是否在「另行通知」模式
+                const isNotifyMode = notifyBtn.classList.contains('bg-theme-orange');
+                
+                if (isNotifyMode) {
+                    // 如果是另行通知模式，視為已填寫 (不需檢查 timeInput.value)
+                    // 確保 timeInput 確實被鎖定且值正確 (防呆)
+                    if (timeInput.value !== '將另行通知接回時間') {
+                         timeInput.value = '將另行通知接回時間';
+                    }
+                } else {
+                    // 如果是時間選擇模式，必須有值
+                    if (!timeInput.value || timeInput.value.trim() === '') {
+                        isValid = false;
+                        timeInput.classList.add('input-error');
+                        // 如果按鈕旁邊有錯誤訊息區塊，也可以顯示 (這裡假設沒有，只標紅框)
+                        if (!firstErrorInput) firstErrorInput = timeInput;
+                    }
+                }
 
-                // 檢查是否已簽名
+                // --- 3. 簽名檢查 ---
                 const signatureData = document.getElementById('signature-data').value;
                 if (!signatureData) {
                     isValid = false;
-                    // 滾動到簽名區域
-                    document.getElementById('signature-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const signSection = document.getElementById('signature-section');
+                    if (!firstErrorInput) firstErrorInput = signSection;
+                }
+
+                // --- 4. 結論處理 ---
+                if (!isValid) {
+                    // 如果有錯誤，顯示通用訊息並捲動到第一個錯誤處
+                    this.showToast('請檢查標示紅色的必填欄位', 'error');
+                    if (firstErrorInput) {
+                        firstErrorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
 
                 return isValid;
             },
+
 
             // 顯示 Toast 提示
             showToast: function(message, type = 'info') {
@@ -1436,118 +1709,467 @@
                 }, 300);
             },
 
-            // 處理表單提交
-            handleFormSubmit: async function(event) {
-                event.preventDefault();
-                
-                // 驗證表單
-                if (!this.validateForm()) {
-                    this.showToast('請填寫所有必填欄位並完成簽名', 'error');
-                    return;
+// 處理表單提交
+handleFormSubmit: async function(event) {
+    event.preventDefault();
+    
+    // 驗證表單
+    if (!this.validateForm()) {
+        this.showToast('請填寫所有必填欄位並完成簽名', 'error');
+        return;
+    }
+
+    // 顯示加載狀態
+    const submitBtn = document.getElementById('submitBtn');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const submitBtnSpinner = document.getElementById('submitBtnSpinner');
+    
+    submitBtn.disabled = true;
+    submitBtnText.textContent = '提交中...';
+    submitBtnSpinner.classList.remove('hidden');
+
+    try {
+        // ★★★ 1. 先處理簽名上傳 ★★★
+        const base64Sign = document.getElementById('signature-data').value;
+        let signatureUrl = ""; // 預設空字串
+
+        if (base64Sign && base64Sign.startsWith('data:image')) {
+            // 顯示上傳中提示
+            this.showToast('正在上傳簽名檔...', 'info');
+            
+            try {
+                // 呼叫上傳函數並等待結果
+                signatureUrl = await this.uploadSignatureToStorage(base64Sign);
+            } catch (uploadErr) {
+                console.error('簽名上傳失敗:', uploadErr);
+                throw new Error('簽名檔上傳失敗，請重試');
+            }
+        }
+        // ★★★ 上傳結束 ★★★
+
+        // 收集表單資料
+        const formData = new FormData(document.getElementById('contractForm'));
+        
+        // 收集「本次服務內容」(複選框)
+        const services = [];
+        document.querySelectorAll('input[name="service"]:checked').forEach(checkbox => {
+            services.push(checkbox.value);
+        });
+        
+        // 準備要上傳的資料物件 (對應 Supabase 欄位)
+        const contractData = {
+            // 飼主資料
+            owner_name: formData.get('ownerName'),
+            owner_email: formData.get('ownerEmail'),
+            owner_id: formData.get('ownerId'),
+            owner_phone: formData.get('ownerPhone'),
+            owner_address: formData.get('ownerAddress'),
+            emergency_contact: formData.get('emergencyContact'),
+            emergency_phone: formData.get('emergencyPhone'),
+            hospital: formData.get('hospital'),
+            
+            // 寵物資料
+            pet_name: formData.get('petName'),
+            breed: formData.get('breed'),
+            color: formData.get('color'),
+            age: parseFloat(formData.get('age')),
+            chip_status: formData.get('chipStatus'),
+            chip_number: formData.get('chipNumber'),
+            sex: formData.get('sex'),
+            neutered: formData.get('neutered'),
+            friendly_to_people: formData.get('friendlyToPeople'),
+            friendly_to_dogs: formData.get('friendlyToDogs'),
+            aggressive: formData.get('aggressive'),
+            has_medical_history: formData.get('hasMedicalHistory'),
+            medical_history: formData.get('medicalHistory'),
+            
+            // 寵物身體狀態檢視
+            check_eye: formData.get('check_eye'),
+            eye_description: formData.get('eyeDescription'),
+            check_ear: formData.get('check_ear'),
+            ear_description: formData.get('earDescription'),
+            check_tooth: formData.get('check_tooth'),
+            tooth_description: formData.get('toothDescription'),
+            check_limb: formData.get('check_limb'),
+            limb_description: formData.get('limbDescription'),
+            check_skin: formData.get('check_skin'),
+            skin_description: formData.get('skinDescription'),
+            check_fur: formData.get('check_fur'),
+            fur_description: formData.get('furDescription'),
+            
+            // 服務內容
+            services: services, // 陣列格式
+            other_service: formData.get('otherService'),
+            pickup_time: document.getElementById('timeInput').disabled ? '另行通知' : formData.get('pickupTime'),
+            
+            // 支付資訊
+            payment: formData.get('payment'),
+            other_payment: formData.get('otherPayment'),
+            amount: parseFloat(formData.get('amount')),
+            
+            // ★★★ 2. 這裡改成存入網址 ★★★
+            signature_data: signatureUrl, 
+            
+            signature_timestamp: document.getElementById('sig-timestamp').innerText
+        };
+
+// 上傳資料到 Supabase
+        const { data, error } = await this.supabase
+            .from('contracts')
+            .insert([contractData])
+            .select();
+
+        if (error) throw error;
+
+        // ★★★ 新增：檢查 Email 是否為空 ★★★
+        const emailValue = formData.get('ownerEmail');
+        if (!emailValue || emailValue.trim() === '') {
+            // Email 為空，顯示下載頁面
+            this.showDownloadPage(contractData);
+        } else {
+            // Email 不為空，寄送副本
+            try {
+                // 1. 生成 HTML (把剛剛準備好的 contractData 傳進去)
+                const emailHtmlBody = this.generateEmailHTML(contractData);
+
+                // 2. 呼叫 Supabase Edge Function
+                const { error: funcError } = await this.supabase.functions.invoke('send-mail', {
+                    body: { 
+                        email: contractData.owner_email,
+                        owner_name: contractData.owner_name,
+                        pet_name: contractData.pet_name,
+                        htmlContent: emailHtmlBody 
+                    }
+                });
+
+                if (funcError) {
+                    console.error('Email 發送失敗:', funcError);
+                    // 這裡可以選擇不報錯，因為合約已經存了，不影響主要流程
+                } else {
+                    console.log('Email 發送成功');
                 }
+            } catch (mailErr) {
+                console.error('寄信過程發生錯誤:', mailErr);
+            }
 
-                // 顯示加載狀態
-                const submitBtn = document.getElementById('submitBtn');
-                const submitBtnText = document.getElementById('submitBtnText');
-                const submitBtnSpinner = document.getElementById('submitBtnSpinner');
+            // 成功提交後的處理
+            this.showToast('契約已成功提交！感謝您的使用。', 'success');
+            
+            // 重置表單
+            document.getElementById('contractForm').reset();
+            this.resetSignature();
+            this.router('home');
+        }
+        
+    } catch (error) {
+        console.error('提交錯誤:', error);
+        this.showToast('提交失敗，請稍後再試', 'error');
+    } finally {
+        // 恢復按鈕狀態
+        submitBtn.disabled = false;
+        submitBtnText.textContent = '確認並提交';
+        submitBtnSpinner.classList.add('hidden');
+    }
+},
+// 顯示下載頁面
+showDownloadPage: function(contractData) {
+    // 隱藏所有視圖
+    const views = ['home', 'contract'];
+    views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if(el) el.classList.add('hidden');
+    });
+    
+    // 顯示下載頁面視圖
+    const downloadView = document.getElementById('view-download');
+    if(downloadView) {
+        downloadView.classList.remove('hidden');
+    } else {
+        // 如果下載頁面視圖不存在，創建一個
+        this.createDownloadPage(contractData);
+    }
+    
+    // 隱藏返回按鈕
+    const btnBack = document.getElementById('btn-back');
+    if(btnBack) btnBack.classList.add('hidden');
+},
+
+// 創建下載頁面
+createDownloadPage: function(contractData) {
+    const main = document.querySelector('main');
+    
+    // 創建下載頁面視圖
+    const downloadView = document.createElement('div');
+    downloadView.id = 'view-download';
+    downloadView.className = 'animate-slide-up space-y-6';
+    
+    // 生成契約 HTML 內容
+    const contractHtml = this.generateEmailHTML(contractData);
+    
+    downloadView.innerHTML = `
+        <div class="text-center pt-8 pb-6">
+            <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-theme-orange/10 flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-12 h-12 text-theme-orange"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-theme-brown mb-2">感謝您的簽署！</h2>
+            <p class="text-sm text-theme-sub">契約已成功提交並保存</p>
+        </div>
+        
+        <div class="glass-panel p-6 text-center">
+            <p class="text-base text-theme-brown font-bold mb-4">如需保存副本，請點擊下方按鈕存入您的手機相簿/檔案</p>
+            
+            <button onclick="app.downloadContract()" class="w-full bg-theme-brown text-white py-4 rounded-xl font-bold shadow-lg shadow-theme-brown/20 tracking-widest text-lg flex items-center justify-center gap-2 mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                <span>下載至手機</span>
+            </button>
+        </div>
+        
+        <div class="text-center">
+            <button onclick="app.router('home')" class="text-theme-sub font-bold text-sm flex items-center justify-center gap-1 mx-auto">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span>返回首頁</span>
+            </button>
+        </div>
+        
+        <!-- 隱藏的契約內容，用於生成下載檔案 -->
+        <div id="contract-content" class="hidden">${contractHtml}</div>
+    `;
+    
+    // 添加到主內容區域
+    main.appendChild(downloadView);
+    
+    // 初始化圖標
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+},
+
+// 下載契約
+downloadContract: function() {
+    // 獲取契約 HTML 內容
+    const contractContent = document.getElementById('contract-content');
+    if (!contractContent) {
+        this.showToast('無法獲取契約內容', 'error');
+        return;
+    }
+    
+    // 創建一個新的窗口來顯示契約內容
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+        printWindow.document.write(contractContent.innerHTML);
+        printWindow.document.close();
+        
+        // 延遲執行打印，確保內容已加載
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
+    } else {
+        this.showToast('無法打開下載窗口，請檢查瀏覽器設置', 'error');
+    }
+},
+
+// 輔助函數：生成 Email HTML 內容
+            generateEmailHTML: function(data) {
+                // 1. 資料格式化
+                const mapBool = (val) => val === 'yes' ? '是' : (val === 'no' ? '否' : val);
+                const mapSex = (val) => val === 'male' ? '公' : (val === 'female' ? '母' : val);
+                const mapChip = (status, num) => status === 'has' ? `有 (${num})` : (status === 'unknown' ? '有 (號碼不詳)' : '無');
                 
-                submitBtn.disabled = true;
-                submitBtnText.textContent = '提交中...';
-                submitBtnSpinner.classList.remove('hidden');
+                // 處理身體檢查顯示邏輯
+                const formatCheck = (status, desc) => {
+                    if (status === '異常' || status === '打結' || status === '跳蚤壁蝨' || status === '其他') {
+                        return `<strong style="color: #D98E4F;">${status}</strong> <span style="font-size: 12px; color: #666;">(${desc || '未填寫'})</span>`;
+                    }
+                    return status;
+                };
 
-                try {
-                    // 收集表單資料
-                    const formData = new FormData(document.getElementById('contractForm'));
-                    
-                    // 收集「本次服務內容」(複選框)
-                    const services = [];
-                    document.querySelectorAll('input[name="service"]:checked').forEach(checkbox => {
-                        services.push(checkbox.value);
-                    });
-                    
-                    // 準備要上傳的資料物件 (對應 Supabase 欄位)
-                    const contractData = {
-                        // 飼主資料
-                        owner_name: formData.get('ownerName'),
-                        owner_email: formData.get('ownerEmail'),
-                        owner_id: formData.get('ownerId'),
-                        owner_phone: formData.get('ownerPhone'),
-                        owner_address: formData.get('ownerAddress'),
-                        emergency_contact: formData.get('emergencyContact'),
-                        emergency_phone: formData.get('emergencyPhone'),
-                        hospital: formData.get('hospital'),
-                        
-                        // 寵物資料
-                        pet_name: formData.get('petName'),
-                        breed: formData.get('breed'),
-                        color: formData.get('color'),
-                        age: parseFloat(formData.get('age')),
-                        chip_status: formData.get('chipStatus'),
-                        chip_number: formData.get('chipNumber'),
-                        sex: formData.get('sex'),
-                        neutered: formData.get('neutered'),
-                        friendly_to_people: formData.get('friendlyToPeople'),
-                        friendly_to_dogs: formData.get('friendlyToDogs'),
-                        aggressive: formData.get('aggressive'),
-                        has_medical_history: formData.get('hasMedicalHistory'),
-                        medical_history: formData.get('medicalHistory'),
-                        
-                        // 寵物身體狀態檢視
-                        check_eye: formData.get('check_eye'),
-                        eye_description: formData.get('eyeDescription'),
-                        check_ear: formData.get('check_ear'),
-                        ear_description: formData.get('earDescription'),
-                        check_tooth: formData.get('check_tooth'),
-                        tooth_description: formData.get('toothDescription'),
-                        check_limb: formData.get('check_limb'),
-                        limb_description: formData.get('limbDescription'),
-                        check_skin: formData.get('check_skin'),
-                        skin_description: formData.get('skinDescription'),
-                        check_fur: formData.get('check_fur'),
-                        fur_description: formData.get('furDescription'),
-                        
-                        // 服務內容
-                        services: services, // 陣列格式
-                        other_service: formData.get('otherService'),
-                        pickup_time: document.getElementById('timeInput').disabled ? '另行通知' : formData.get('pickupTime'),
-                        
-                        // 支付資訊
-                        payment: formData.get('payment'),
-                        other_payment: formData.get('otherPayment'),
-                        amount: parseFloat(formData.get('amount')),
-                        
-                        // 簽名資料
-                        signature_data: document.getElementById('signature-data').value,
-                        signature_timestamp: document.getElementById('sig-timestamp').innerText
-                    };
+                // 2. LOGO URL
+                const logoUrl = "https://slkfbsvxoriqmwoeobop.supabase.co/storage/v1/object/public/logo/logo.png";
 
-                    // 上傳資料到 Supabase
-                    const { data, error } = await this.supabase
-                        .from('contracts')
-                        .insert([contractData])
-                        .select();
-
-                    if (error) throw error;
-
-                    // 成功提交後的處理
-                    this.showToast('契約已成功提交！感謝您的使用。', 'success');
+                // 3. 回傳完整 HTML 字串
+                return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>抱抱熊美容服務契約</title>
+                </head>
+                <body style="font-family: 'Helvetica', 'Arial', sans-serif; line-height: 1.6; color: #5D4037; background-color: #FFFBF0; margin: 0; padding: 0;">
                     
-                    // 重置表單
-                    document.getElementById('contractForm').reset();
-                    this.resetSignature();
-                    this.router('home');
-                    
-                } catch (error) {
-                    console.error('提交錯誤:', error);
-                    this.showToast('提交失敗，請稍後再試', 'error');
-                } finally {
-                    // 恢復按鈕狀態
-                    submitBtn.disabled = false;
-                    submitBtnText.textContent = '確認並提交';
-                    submitBtnSpinner.classList.add('hidden');
-                }
+                    <div style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;">
+                        
+                        <div style="background-color: #5D4037; padding: 25px 20px; text-align: center;">
+                            <img src="${logoUrl}" alt="抱抱熊 Logo" style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid #FFFBF0; margin-bottom: 10px; display: inline-block;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 22px; letter-spacing: 2px;">美容服務契約書副本</h1>
+                            <p style="margin: 5px 0 0 0; color: #D98E4F; font-size: 12px; font-weight: bold; letter-spacing: 1px;">PET LIFE STYLE</p>
+                        </div>
+
+                        <div style="padding: 30px 25px;">
+                            
+                            <p style="margin-top: 0;">親愛的 <strong>${data.owner_name}</strong> 您好：</p>
+                            <p style="color: #666; font-size: 14px;">感謝您選擇抱抱熊寵物生活館！以下是您為愛寵 <strong>${data.pet_name}</strong> 本次美容服務簽署的契約內容副本。</p>
+
+                            <div style="background-color: #FFFBF0; border: 1px solid #F2D0B4; padding: 20px; margin: 25px 0; border-radius: 12px;">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr>
+                                        <td width="30" valign="top" style="font-size: 20px;">✂️</td>
+                                        <td style="padding-bottom: 10px;">
+                                            <strong style="color: #5D4037; display: block; margin-bottom: 2px;">服務項目</strong>
+                                            <span style="color: #D98E4F; font-weight: bold;">${data.services.join('、 ')}</span>
+                                            ${data.other_service ? `<span style="font-size: 13px; color: #888;">(${data.other_service})</span>` : ''}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="30" valign="top" style="font-size: 20px;">🕒</td>
+                                        <td style="padding-bottom: 10px;">
+                                            <strong style="color: #5D4037; display: block; margin-bottom: 2px;">預計接回時間</strong>
+                                            <span>${data.pickup_time}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="30" valign="top" style="font-size: 20px;">💰</td>
+                                        <td>
+                                            <strong style="color: #5D4037; display: block; margin-bottom: 2px;">支付金額</strong>
+                                            <span style="font-size: 18px; font-weight: bold;">NT$ ${data.amount}</span>
+                                            <span style="font-size: 12px; color: #888; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #ddd; margin-left: 5px;">${data.payment}${data.other_payment ? '-' + data.other_payment : ''}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <h3 style="color: #5D4037; font-size: 16px; border-left: 4px solid #D98E4F; padding-left: 10px; margin-top: 30px;">契約詳細內容</h3>
+                            
+                            <table width="100%" cellpadding="10" cellspacing="0" border="0" style="font-size: 14px; border-collapse: collapse; margin-bottom: 20px;">
+                                <tr style="background-color: #f8f8f8;">
+                                    <td colspan="2" style="border-bottom: 2px solid #eee; color: #8D6E63; font-weight: bold;">👤 甲方 (飼主) 資料</td>
+                                </tr>
+                                <tr>
+                                    <td width="30%" style="border-bottom: 1px solid #eee; color: #888;">姓名</td>
+                                    <td style="border-bottom: 1px solid #eee;"><strong>${data.owner_name}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">電話</td>
+                                    <td style="border-bottom: 1px solid #eee;">${data.owner_phone}</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">身分證</td>
+                                    <td style="border-bottom: 1px solid #eee;">${data.owner_id}</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">地址</td>
+                                    <td style="border-bottom: 1px solid #eee;">${data.owner_address}</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">緊急聯絡</td>
+                                    <td style="border-bottom: 1px solid #eee;">${data.emergency_contact} (${data.emergency_phone})</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">指定醫院</td>
+                                    <td style="border-bottom: 1px solid #eee;">${data.hospital || '無 (依店家特約)'}</td>
+                                </tr>
+
+                                <tr style="background-color: #f8f8f8;">
+                                    <td colspan="2" style="border-bottom: 2px solid #eee; color: #8D6E63; font-weight: bold; padding-top: 20px;">🐾 寵物資料</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">寵物名字</td>
+                                    <td style="border-bottom: 1px solid #eee;"><strong style="font-size: 16px; color: #5D4037;">${data.pet_name}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">品種/特徵</td>
+                                    <td style="border-bottom: 1px solid #eee;">
+                                        ${data.breed} / ${data.color} / ${data.age}歲 / ${mapSex(data.sex)}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">晶片號碼</td>
+                                    <td style="border-bottom: 1px solid #eee;">${mapChip(data.chip_status, data.chip_number)}</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">健康行為</td>
+                                    <td style="border-bottom: 1px solid #eee;">
+                                        結紮: ${mapBool(data.neutered)} / 親人: ${mapBool(data.friendly_to_people)} / 親狗: ${mapBool(data.friendly_to_dogs)}<br>
+                                        <span style="color: #D98E4F;">攻擊性: ${mapBool(data.aggressive)}</span> / 
+                                        <span style="color: ${data.has_medical_history === 'yes' ? '#D98E4F' : 'inherit'};">病史: ${mapBool(data.has_medical_history)}</span>
+                                        ${data.medical_history ? `<br><span style="font-size:12px; color:#666;">(病史說明: ${data.medical_history})</span>` : ''}
+                                    </td>
+                                </tr>
+
+                                <tr style="background-color: #f8f8f8;">
+                                    <td colspan="2" style="border-bottom: 2px solid #eee; color: #8D6E63; font-weight: bold; padding-top: 20px;">👁️ 身體外觀檢查 (目視)</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">眼睛/耳朵</td>
+                                    <td style="border-bottom: 1px solid #eee;">
+                                        眼: ${formatCheck(data.check_eye, data.eye_description)}<br>
+                                        耳: ${formatCheck(data.check_ear, data.ear_description)}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">牙齒/四肢</td>
+                                    <td style="border-bottom: 1px solid #eee;">
+                                        牙: ${formatCheck(data.check_tooth, data.tooth_description)}<br>
+                                        肢: ${formatCheck(data.check_limb, data.limb_description)}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border-bottom: 1px solid #eee; color: #888;">皮膚/皮毛</td>
+                                    <td style="border-bottom: 1px solid #eee;">
+                                        膚: ${formatCheck(data.check_skin, data.skin_description)}<br>
+                                        毛: ${formatCheck(data.check_fur, data.fur_description)}
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 13px; color: #666; margin-bottom: 20px; border: 1px solid #eee;">
+                                <h4 style="margin: 0 0 8px 0; color: #5D4037; font-size: 14px;">乙方 (服務提供者)</h4>
+                                <p style="margin: 3px 0;"><strong>店名：</strong>抱抱熊寵物生活館 (負責人：楊富成)</p>
+                                <p style="margin: 3px 0;"><strong>電話：</strong>(03)361-0225</p>
+                                <p style="margin: 3px 0;"><strong>地址：</strong>桃園市八德區建國路1134號1樓</p>
+                                <p style="margin: 3px 0;"><strong>特約醫院：</strong>立仁動物醫院 (桃園市八德區公園路30號)</p>
+                            </div>
+
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: #5D4037; font-size: 14px; margin-bottom: 10px;">寵物美容定型化契約條款</h3>
+                                <div style="font-size: 11px; color: #888; background-color: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; line-height: 1.8;">
+                                    <ol style="padding-left: 20px; margin: 0;">
+                                        <li>除本契約另有約定、特殊緊急情況、或不可抗力之情況外，未經飼主同意，店家不得將寵物帶離美容場所(同上店家地址)、轉售、轉讓或以其他變相方法作為其他用途。</li>
+                                        <li>飼主應於美容當日，將寵物領回，如經通知1日內未領回，依動保法第29條第一款通知主管機關，為飼主惡意棄養，相關訂金為3萬~15萬元，其他衍生性費用將跟飼主求償，例:人員加班費等。</li>
+                                        <li>寵物發生攻擊行為，如因飼主未善盡告知義務而造成店內人員傷亡、財物損毀等費用，將全額向飼主(寵物占有權人)求償。</li>
+                                        <li>店家應按本契約約定內容提供一定品質之美容服務。若因可歸責於店家或其受僱人之事由，導致其提供之美容服務有瑕疵，造成飼主發生損失的情況，飼主得要求減少價金或解除契約。</li>
+                                        <li>本契約之任一方得隨時終止本契約，若因本契約之中止而生損害之一方得向他方請求賠償。</li>
+                                        <li>於美容服務期間，如發現寵物有異常狀態，應立即通知飼主並妥善處理，如發生異常狀態的原因可歸責於店家之操作行為，店家應負損害賠償責任，例:摔傷寵物等。</li>
+                                        <li>因本契約所生之訴訟，雙方合意以地方法院為管轄法院。</li>
+                                        <li>美容契約相關法條，附件如店内張貼之公告，如有需求請自行拍照留存。</li>
+                                        <li style="color: #D98E4F; font-weight: bold; margin-top: 5px;">本人已詳閱並同意以上條款，且同意提供資料用於店家服務通知。</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 40px; border-top: 2px dashed #eee; padding-top: 30px; text-align: center;">
+                                <div style="font-size: 14px; color: #888; margin-bottom: 10px; font-weight: bold;">甲方 (飼主) 簽署</div>
+                                
+                                <div style="display: inline-block; min-width: 250px; border-bottom: 2px solid #5D4037; padding-bottom: 10px; margin-bottom: 5px;">
+                                    <img src="${data.signature_data}" alt="電子簽名" style="max-height: 80px; max-width: 100%; display: block; margin: 0 auto;">
+                                </div>
+                                
+                                <div style="font-size: 12px; color: #aaa;">
+                                    簽署時間：${data.signature_timestamp}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div style="background-color: #5D4037; color: #e0e0e0; padding: 20px; text-align: center; font-size: 12px; border-top: 4px solid #D98E4F;">
+                            <p style="margin: 0 0 5px 0;">&copy; 2026 抱抱熊寵物生活館 All Rights Reserved.</p>
+                            <p style="margin: 0; opacity: 0.6;">此信件為系統自動發送的契約副本，請勿直接回覆。</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                `;
             },
-
 
             // 註冊 Service Worker
             registerServiceWorker: function() {
@@ -1576,5 +2198,34 @@
             app.init();
         });
     </script>
+    <!-- 寵物選擇彈窗 -->
+<div id="petSelectModal" class="fixed inset-0 z-[9999] hidden bg-black/20 backdrop-blur-[2px] flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div class="bg-[#FFFBF0] w-[90%] max-w-sm rounded-[32px] p-6 shadow-2xl transform scale-95 transition-transform duration-300 border border-white/50" id="petSelectContent">
+        
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-theme-orange/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-slight">
+                <i data-lucide="party-popper" class="w-8 h-8 text-theme-orange"></i>
+            </div>
+            <h3 class="text-xl font-bold text-theme-brown font-serif tracking-widest mb-1">歡迎回來！</h3>
+            <p class="text-xs text-theme-sub tracking-wider">找到歷史紀錄，請確認要帶入的資料：</p>
+        </div>
+
+        <!-- 寵物列表容器 -->
+        <div id="petListContainer" class="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1 mb-4">
+            <!-- JS 會自動產生內容放在這裡 -->
+        </div>
+
+        <div class="relative flex py-2 items-center">
+            <div class="flex-grow border-t border-gray-200"></div>
+            <span class="flex-shrink-0 mx-3 text-gray-300 text-xs">OR</span>
+            <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        <button onclick="app.closePetSelectModal()" class="w-full py-3 rounded-xl border border-gray-300 text-gray-500 font-bold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2">
+            <i data-lucide="pen-line" class="w-4 h-4"></i>
+            不使用舊資料，填寫新表單
+        </button>
+    </div>
+</div>
 </body>
 </html>

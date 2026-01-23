@@ -443,19 +443,29 @@ appearance: none;
                 month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
             });
 
-            // 判斷是否有風險標籤
+            // 1. 判斷是否有風險標籤 (攻擊性、不親狗)
             const hasRisk = item.aggressive === '是' || item.friendly_to_dogs === '否';
             const riskTag = hasRisk ? 
                 `<span class="px-2 py-0.5 rounded-md bg-red-100 text-red-500 text-[10px] font-bold whitespace-nowrap">需注意</span>` : '';
 
-            // 判斷是否有備註
+            // 2. 判斷是否有備註
             const hasNotes = item.admin_notes && item.admin_notes.trim().length > 0;
             const noteTag = hasNotes ? 
                 `<span class="px-2 py-0.5 rounded-md bg-theme-orange/10 text-theme-orange text-[10px] font-bold flex items-center gap-1 whitespace-nowrap"><i data-lucide="sticky-note" class="w-3 h-3"></i> 備註</span>` : '';
 
-            // 只有在有風險或備註時，才顯示這一整行 div
-            const tagsHtml = (riskTag || noteTag) ? 
-                `<div class="flex items-center gap-2 flex-wrap mt-1">${riskTag}${noteTag}</div>` : '';
+            // 3. 判斷是否有身體異常或病史 (新增)
+            // 檢查身體狀態是否有異常
+            const bodyChecks = ['check_eye', 'check_ear', 'check_tooth', 'check_limb', 'check_skin', 'check_fur'];
+            const hasBodyIssue = bodyChecks.some(key => item[key] === '異常' || item[key] === '打結' || item[key] === '跳蚤壁蝨');
+            // 檢查是否有病史
+            const hasHistory = item.has_medical_history === '有';
+            
+            // 如果有異常或病史，顯示標籤
+            const healthTag = (hasBodyIssue || hasHistory) ? 
+                `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold whitespace-nowrap">身體/病史</span>` : '';
+            // 只有在有風險、備註或身體/病史時，才顯示這一整行 div
+            const tagsHtml = (riskTag || noteTag || healthTag) ? 
+                `<div class="flex items-center gap-2 flex-wrap mt-1">${riskTag}${noteTag}${healthTag}</div>` : '';
 
             return `
 <div onclick="openModal('${item.id}')" class="glass-panel p-5 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 group border-l-4 border-l-transparent hover:border-l-theme-orange">
@@ -575,6 +585,19 @@ document.getElementById('search-input').addEventListener('input', (e) => {
                 ]
             },
             {
+                title: '👁️ 身體狀態檢視',
+                fields: [
+                    { label: '眼睛', key: 'check_eye', suffix: ' (', suffixEnd: ')', isBodyCheck: true },
+                    { label: '耳朵', key: 'check_ear', suffix: ' (', suffixEnd: ')', isBodyCheck: true },
+                    { label: '牙齒', key: 'check_tooth', suffix: ' (', suffixEnd: ')', isBodyCheck: true },
+                    { label: '四肢', key: 'check_limb', suffix: ' (', suffixEnd: ')', isBodyCheck: true },
+                    { label: '皮膚', key: 'check_skin', suffix: ' (', suffixEnd: ')', isBodyCheck: true },
+                    { label: '皮毛', key: 'check_fur', suffix: ' (', suffixEnd: ')', isBodyCheck: true }
+                ]
+            },
+
+
+            {
                 title: '✂️ 服務內容',
                 fields: [
                     { label: '項目', key: 'services', full: true, isTag: true },
@@ -614,17 +637,59 @@ document.getElementById('search-input').addEventListener('input', (e) => {
             section.fields.forEach(f => {
                 let val = currentItem[f.key];
                 if (val === null || val === undefined) val = '-';
-                if(f.suffix && val !== '-') val += f.suffix;
+
+                if (val !== '-') {
+                    if (f.key === 'sex') {
+                        val = (val === 'male') ? '公' : (val === 'female') ? '母' : val;
+                    }
+                    else if (f.key === 'neutered' || 
+                             f.key === 'friendly_to_people' || 
+                             f.key === 'friendly_to_dogs' || 
+                             f.key === 'has_medical_history' ||
+                             f.key === 'aggressive') { 
+                        val = (val === 'yes') ? '是' : (val === 'no') ? '否' : val;
+                    }
+                }
+
+
+                // --- 2. 處理前後綴 (例如：異常 (描述)) ---
+                let displayVal = val;
                 
+                // 如果有 suffix (例如 '(' )，且值不是 '-'
+                if (val !== '-' && f.suffix) {
+                    // 嘗試取得對應的描述欄位 (例如 eyeDescription)
+                    let descKey = f.key.replace('check_', '').toLowerCase() + '_description';
+                    let descVal = currentItem[descKey];
+
+                    // 如果有描述內容，才加上括號
+                    if (descVal && descVal.trim() !== '') {
+                        displayVal += f.suffix + descVal + (f.suffixEnd || '');
+                    }
+                }
+                
+                // 如果有額外的後綴 (例如：歲、元)，且值不是 '-'
+                if (f.suffix && !f.suffixEnd && val !== '-') displayVal += f.suffix;
+
                 const colSpan = f.full ? 'sm:col-span-2' : '';
                 
-                let displayVal = val;
+                // 特殊處理：標籤樣式 (Services)
                 if (f.isTag && val !== '-' && Array.isArray(val)) {
                     displayVal = val.map(v => 
                         `<span class="inline-block px-2 py-0.5 rounded bg-theme-orange/10 text-theme-orange text-xs font-bold mr-1 mb-1">${v}</span>`
                     ).join('');
-                } else if (f.highlight === true || val === f.highlight) {
+                } 
+                // 特殊處理：高亮顯示 (攻擊性、病史)
+                else if (f.highlight === true || val === f.highlight) {
                     displayVal = `<span class="text-theme-orange font-bold">${val}</span>`;
+                }
+
+                // --- 3. 決定是否顯示該欄位 ---
+                // 如果是身體檢查項目 (isBodyCheck: true) 且沒有描述，則不顯示額外的描述欄位
+                // 但這裡我們已經在 sections 定義中移除了描述欄位，所以這裡主要處理顯示邏輯
+                // 這裡的邏輯確保了如果沒有異常，就不會顯示 "正常 ()" 這種多餘的括號
+                if (f.isBodyCheck && val === '正常' && f.suffix) {
+                    // 如果是正常，且原本有設定要加括號，這裡強制不顯示括號
+                    displayVal = val; 
                 }
 
                 html += `
@@ -638,6 +703,8 @@ document.getElementById('search-input').addEventListener('input', (e) => {
                     </div>
                 `;
             });
+
+
             html += `</div></div>`;
         });
 
