@@ -407,28 +407,74 @@
                     </div>
                 </section>
 
-                <section class="glass-panel p-5">
-                    <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
-                        <i data-lucide="scissors" class="w-4 h-4"></i> 本次服務內容
-                    </h3>
-                    <div class="grid grid-cols-2 gap-3 radio-btn-group">
-                        <label class="cursor-pointer"><input type="radio" name="service" class="hidden"><div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange">包月洗澡</div></label>
-                        <label class="cursor-pointer"><input type="radio" name="service" class="hidden"><div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange">基礎洗澡</div></label>
-                        <label class="cursor-pointer"><input type="radio" name="service" class="hidden"><div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange">精緻美容</div></label>
-                        <label class="cursor-pointer"><input type="radio" name="service" class="hidden"><div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange">局部修剪</div></label>
-                        <label class="cursor-pointer col-span-2"><input type="radio" name="service" class="hidden"><div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange">其他項目</div></label>
-                    </div>
-                    
-<div class="mt-6">
-                        <label>預計接回時間</label>
-                        <div class="flex gap-2">
-                            <button type="button" id="btn-notify" onclick="toggleTime()" class="border border-theme-brown/20 text-theme-brown px-4 py-2 rounded-xl text-sm font-bold">另行通知</button>
-                            <input type="time" id="timeInput" class="input-minimal">
-                        </div>
-                        <p class="text-xs text-red-500 mt-2 font-bold"><i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> 逾時 1 小時以上，將酌收 $100/小時 安親費。</p>
-                    </div>
-                </section>
+<section class="glass-panel p-5">
+    <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
+        <i data-lucide="scissors" class="w-4 h-4"></i> 本次服務內容 (可複選)
+    </h3>
+    
+    <!-- 服務項目按鈕群組 -->
+    <div class="grid grid-cols-2 gap-3">
+        <!-- 第一行：包月洗澡 + 包月美容 -->
+        <label class="cursor-pointer relative">
+            <input type="checkbox" name="service" value="包月洗澡" class="peer sr-only">
+            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                包月洗澡
+            </div>
+        </label>
+        
+        <label class="cursor-pointer relative">
+            <input type="checkbox" name="service" value="包月美容" class="peer sr-only">
+            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                包月美容
+            </div>
+        </label>
 
+        <!-- 第二行：基礎洗澡 + 精緻美容 -->
+        <label class="cursor-pointer relative">
+            <input type="checkbox" name="service" value="基礎洗澡" class="peer sr-only">
+            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                基礎洗澡
+            </div>
+        </label>
+
+        <label class="cursor-pointer relative">
+            <input type="checkbox" name="service" value="精緻美容" class="peer sr-only">
+            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                精緻美容
+            </div>
+        </label>
+
+        <!-- 第三行：局部修剪 + 其他項目 -->
+        <label class="cursor-pointer relative">
+            <input type="checkbox" name="service" value="局部修剪" class="peer sr-only">
+            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                局部修剪
+            </div>
+        </label>
+
+        <label class="cursor-pointer relative">
+            <input type="checkbox" id="chk-other-service" name="service" value="其他項目" class="peer sr-only" onchange="toggleOtherServiceInput()">
+            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                其他項目
+            </div>
+        </label>
+    </div>
+
+    <!-- 當點選"其他項目"時顯示的輸入框 -->
+    <div id="other-service-input-container" class="hidden mt-3 animate-fade-in">
+        <input type="text" id="other-service-text" class="input-minimal" placeholder="請輸入其他項目名稱">
+    </div>
+
+    <!-- 預計接回時間區塊 -->
+    <div class="mt-6">
+        <label>預計接回時間</label>
+        <div class="flex gap-2">
+            <button type="button" id="btn-notify" onclick="toggleTime()" class="border border-theme-brown/20 text-theme-brown px-4 py-2 rounded-xl text-sm font-bold">另行通知</button>
+            <input type="time" id="timeInput" class="input-minimal">
+        </div>
+        <p class="text-xs text-red-500 mt-2 font-bold"><i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> 逾時 1 小時以上，將酌收 $100/小時 安親費。</p>
+    </div>
+</section>
                 <section class="glass-panel p-5">
                     <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
                         <i data-lucide="wallet" class="w-4 h-4"></i> 支付資訊
@@ -458,11 +504,16 @@
                         </div>
                         <div>
                             <label>支付金額<span class="text-theme-orange">*</span></label>
-                            <div class="relative mt-1">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">$NT</span>
-                                <input type="number" class="input-minimal pl-12 text-lg font-bold text-theme-brown" placeholder="輸入金額">
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">元</span>
-                            </div>
+<div class="relative mt-1">
+    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">$NT</span>
+    <input type="number" class="input-minimal pl-12 text-lg font-bold text-theme-brown" placeholder="輸入金額">
+    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">元</span>
+</div>
+<!-- 新增的提示文字 -->
+<p class="text-xs text-theme-sub mt-2 font-bold leading-relaxed">
+    <i data-lucide="alert-circle" class="w-3 h-3 inline text-theme-orange mr-1"></i>
+    此金額為基礎報價，若現場發現嚴重打結、寄生蟲等狀況，將另行告知加價。
+</p>
                         </div>
                     </div>
                 </section>
@@ -470,7 +521,7 @@
                 <section class="bg-theme-brown/5 rounded-2xl p-5 border border-theme-brown/10">
                     <h3 class="text-theme-brown font-bold text-sm mb-4">乙方資訊 (抱抱熊寵物生活館)</h3>
                     <div class="space-y-2 text-sm text-theme-sub">
-                        <div class="flex justify-between"><span class="font-bold">負責人</span><span>[店家負責人]</span></div>
+                        <div class="flex justify-between"><span class="font-bold">負責人</span><span>楊富成</span></div>
                         <div class="flex justify-between"><span class="font-bold">聯絡電話</span><span>(03)361-0225</span></div>
                         <div class="flex justify-between"><span class="font-bold">地址</span><span class="text-right">桃園市八德區建國路1134號1樓</span></div>
                         <div class="border-t border-dashed border-theme-brown/20 my-2"></div>
@@ -844,6 +895,23 @@
                 resizeCanvas();
             }
         });
+
+// 切換"其他項目"輸入框顯示/隱藏
+function toggleOtherServiceInput() {
+    const checkbox = document.getElementById('chk-other-service');
+    const inputContainer = document.getElementById('other-service-input-container');
+    const inputField = document.getElementById('other-service-text');
+    
+    if (checkbox.checked) {
+        inputContainer.classList.remove('hidden');
+        inputField.focus(); // 自動聚焦到輸入框
+    } else {
+        inputContainer.classList.add('hidden');
+        inputField.value = ''; // 取消勾選時清空內容
+    }
+}
+
+
     </script>
     <script>
     if ('serviceWorker' in navigator) {
