@@ -273,6 +273,115 @@
                         </div>
                     </div>
                 </section>
+<section class="glass-panel p-5">
+                    <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
+                        <i data-lucide="eye" class="w-4 h-4"></i> 寵物身體狀態檢視 (目視)
+                    </h3>
+                    
+                    <div class="space-y-4 text-sm">
+                        <div class="border-b border-dashed border-gray-200 pb-3">
+                            <div class="font-bold text-theme-brown mb-2">1. 眼睛</div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_eye" value="正常" class="accent-theme-brown w-4 h-4">
+                                    <span>正常</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_eye" value="異常" class="accent-theme-orange w-4 h-4">
+                                    <span class="text-theme-orange">異常:</span>
+                                </label>
+                                <input type="text" class="flex-1 input-minimal py-1 px-3 text-sm min-w-[100px]" placeholder="請描述狀況">
+                            </div>
+                        </div>
+
+                        <div class="border-b border-dashed border-gray-200 pb-3">
+                            <div class="font-bold text-theme-brown mb-2">2. 耳朵</div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_ear" value="正常" class="accent-theme-brown w-4 h-4">
+                                    <span>正常</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_ear" value="異常" class="accent-theme-orange w-4 h-4">
+                                    <span class="text-theme-orange">異常:</span>
+                                </label>
+                                <input type="text" class="flex-1 input-minimal py-1 px-3 text-sm min-w-[100px]" placeholder="請描述狀況">
+                            </div>
+                        </div>
+
+                        <div class="border-b border-dashed border-gray-200 pb-3">
+                            <div class="font-bold text-theme-brown mb-2">3. 牙齒</div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_tooth" value="正常" class="accent-theme-brown w-4 h-4">
+                                    <span>正常</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_tooth" value="異常" class="accent-theme-orange w-4 h-4">
+                                    <span class="text-theme-orange">異常:</span>
+                                </label>
+                                <input type="text" class="flex-1 input-minimal py-1 px-3 text-sm min-w-[100px]" placeholder="請描述狀況">
+                            </div>
+                        </div>
+
+                        <div class="border-b border-dashed border-gray-200 pb-3">
+                            <div class="font-bold text-theme-brown mb-2">4. 四肢</div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_limb" value="正常" class="accent-theme-brown w-4 h-4">
+                                    <span>正常</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_limb" value="異常" class="accent-theme-orange w-4 h-4">
+                                    <span class="text-theme-orange">異常:</span>
+                                </label>
+                                <input type="text" class="flex-1 input-minimal py-1 px-3 text-sm min-w-[100px]" placeholder="請描述狀況">
+                            </div>
+                        </div>
+
+                        <div class="border-b border-dashed border-gray-200 pb-3">
+                            <div class="font-bold text-theme-brown mb-2">5. 皮膚</div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_skin" value="正常" class="accent-theme-brown w-4 h-4">
+                                    <span>正常</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="check_skin" value="異常" class="accent-theme-orange w-4 h-4">
+                                    <span class="text-theme-orange">異常:</span>
+                                </label>
+                                <input type="text" class="flex-1 input-minimal py-1 px-3 text-sm min-w-[100px]" placeholder="請描述狀況">
+                            </div>
+                        </div>
+
+                        <div class="pb-1">
+                            <div class="font-bold text-theme-brown mb-2">6. 皮毛</div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex flex-wrap gap-4">
+                                    <label class="flex items-center gap-1 cursor-pointer">
+                                        <input type="radio" name="check_fur" value="正常" class="accent-theme-brown w-4 h-4">
+                                        <span>正常</span>
+                                    </label>
+                                    <label class="flex items-center gap-1 cursor-pointer">
+                                        <input type="radio" name="check_fur" value="打結" class="accent-theme-orange w-4 h-4">
+                                        <span class="text-gray-600">打結</span>
+                                    </label>
+                                    <label class="flex items-center gap-1 cursor-pointer">
+                                        <input type="radio" name="check_fur" value="跳蚤壁蝨" class="accent-theme-orange w-4 h-4">
+                                        <span class="text-gray-600">跳蚤壁蝨</span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-2 w-full mt-1">
+                                    <label class="flex items-center gap-1 cursor-pointer shrink-0">
+                                        <input type="radio" name="check_fur" value="其他" class="accent-theme-brown w-4 h-4">
+                                        <span>其他:</span>
+                                    </label>
+                                    <input type="text" class="flex-1 input-minimal py-1 px-3 text-sm" placeholder="請描述狀況">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 <section class="glass-panel p-5">
                     <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
@@ -286,13 +395,42 @@
                         <label class="cursor-pointer col-span-2"><input type="radio" name="service" class="hidden"><div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange">其他項目</div></label>
                     </div>
                     
-                    <div class="mt-6">
+<div class="mt-6">
                         <label>預計接回時間</label>
                         <div class="flex gap-2">
                             <button type="button" id="btn-notify" onclick="toggleTime()" class="border border-theme-brown/20 text-theme-brown px-4 py-2 rounded-xl text-sm font-bold">另行通知</button>
                             <input type="time" id="timeInput" class="input-minimal">
                         </div>
-                        <p class="text-xs text-red-500 mt-2 font-bold"><i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> 逾時 2 小時以上，將酌收 $150/小時。</p>
+                        <p class="text-xs text-red-500 mt-2 font-bold"><i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> 逾時 1 小時以上，將酌收 $100/小時 安親費。</p>
+                    </div>
+                </section>
+
+                <section class="glass-panel p-5">
+                    <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
+                        <i data-lucide="wallet" class="w-4 h-4"></i> 支付資訊
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label>支付方式<span class="text-theme-orange">*</span></label>
+                            <div class="space-y-2 mt-2">
+                                <div class="flex gap-2 radio-btn-group">
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="payment" value="現金" class="hidden"><div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange">現金</div></label>
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="payment" value="信用卡" class="hidden"><div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange">信用卡</div></label>
+                                </div>
+                                <div class="flex items-center gap-2 radio-btn-group">
+                                    <label class="cursor-pointer shrink-0"><input type="radio" name="payment" value="其他" class="hidden"><div class="px-4 py-2 border rounded-lg text-sm font-bold text-gray-500 hover:border-theme-orange">其他</div></label>
+                                    <input type="text" class="input-minimal py-2" placeholder="請輸入其他方式">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label>支付金額<span class="text-theme-orange">*</span></label>
+                            <div class="relative mt-1">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">$NT</span>
+                                <input type="number" class="input-minimal pl-12 text-lg font-bold text-theme-brown" placeholder="輸入金額">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">元</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -510,22 +648,27 @@
             }
         }
 
-        // 時間輸入切換
+// 時間輸入切換
         function toggleTime() {
             const btn = document.getElementById('btn-notify');
             const input = document.getElementById('timeInput');
             
             if(btn.classList.contains('bg-theme-orange')) {
+                // 回到時間選擇模式
                 btn.classList.remove('bg-theme-orange', 'text-white');
                 btn.classList.add('border-theme-brown/20', 'text-theme-brown');
+                input.type = 'time'; // 切換回時間類型
                 input.disabled = false;
                 input.classList.remove('opacity-50');
+                input.value = '';
             } else {
+                // 切換到另行通知模式
                 btn.classList.add('bg-theme-orange', 'text-white');
                 btn.classList.remove('border-theme-brown/20', 'text-theme-brown');
+                input.type = 'text'; // 切換為文字類型以顯示中文
                 input.disabled = true;
                 input.classList.add('opacity-50');
-                input.value = '';
+                input.value = '將另行通知接回時間';
             }
         }
 
