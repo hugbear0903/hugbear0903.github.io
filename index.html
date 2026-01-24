@@ -1313,24 +1313,6 @@
                 
                 // 5. 填入病史描述
                 document.querySelector('input[name="medicalHistory"]').value = data.medical_history || '';
-
-                // 6. 處理接回時間
-                const timeInput = document.getElementById('timeInput');
-                const notifyBtn = document.getElementById('btn-notify');
-                
-                // 如果是 '另行通知' 或類似字串，切換到另行通知模式
-                if (data.pickup_time && data.pickup_time.includes('另行通知')) {
-                    // 如果按鈕目前不是激活狀態，就點擊它
-                    if (!notifyBtn.classList.contains('bg-theme-orange')) {
-                        this.toggleTime();
-                    }
-                } else {
-                    // 如果按鈕目前是激活狀態，就點擊它切換回時間選擇
-                    if (notifyBtn.classList.contains('bg-theme-orange')) {
-                        this.toggleTime();
-                    }
-                    timeInput.value = data.pickup_time || '';
-                }
             },
             // === 新增：簽名上傳相關方法 ===
 
