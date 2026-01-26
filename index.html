@@ -716,14 +716,12 @@
                 </section>
 
                 <!-- 本次服務內容 (可複選) -->
-                <section class="glass-panel p-5">
+<section class="glass-panel p-5">
                     <h3 class="flex items-center gap-2 text-theme-brown font-bold text-base mb-4 pb-2 border-b border-gray-100">
                         <i data-lucide="scissors" class="w-4 h-4"></i> 本次服務內容 (可複選)
                     </h3>
                     
-                    <!-- 服務項目按鈕群組 -->
                     <div class="grid grid-cols-2 gap-3">
-                        <!-- 第一行：包月洗澡 + 包月美容 -->
                         <label class="cursor-pointer relative">
                             <input type="checkbox" name="service" value="包月洗澡" class="peer sr-only">
                             <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
@@ -738,7 +736,6 @@
                             </div>
                         </label>
 
-                        <!-- 第二行：基礎洗澡 + 精緻美容 -->
                         <label class="cursor-pointer relative">
                             <input type="checkbox" name="service" value="基礎洗澡" class="peer sr-only">
                             <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
@@ -753,7 +750,6 @@
                             </div>
                         </label>
 
-                        <!-- 第三行：局部修剪 + 其他項目 -->
                         <label class="cursor-pointer relative">
                             <input type="checkbox" name="service" value="局部修剪" class="peer sr-only">
                             <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
@@ -762,6 +758,13 @@
                         </label>
 
                         <label class="cursor-pointer relative">
+                            <input type="checkbox" name="service" value="住宿安親" class="peer sr-only">
+                            <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
+                                住宿安親
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer relative col-span-2">
                             <input type="checkbox" id="chk-other-service" name="service" value="其他項目" class="peer sr-only" onchange="app.toggleOtherServiceInput()">
                             <div class="py-3 text-center border rounded-xl text-sm font-bold text-gray-500 hover:border-theme-orange peer-checked:bg-theme-brown peer-checked:text-white peer-checked:border-theme-brown transition-all">
                                 其他項目
