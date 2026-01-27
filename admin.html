@@ -198,10 +198,20 @@ appearance: none;
 
         <div class="p-5 space-y-5">
             <!-- 標題與搜尋 -->
-            <div class="flex flex-col gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-theme-brown tracking-wider">美容契約列表</h2>
-                    <p class="text-xs text-theme-sub mt-1">Service Contracts</p>
+<div class="flex flex-col gap-4">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-xl font-bold text-theme-brown tracking-wider" id="page-title">美容契約列表</h2>
+                        <p class="text-xs text-theme-sub mt-1">Service Contracts</p>
+                    </div>
+                    <div class="flex bg-theme-brown/5 p-1 rounded-xl gap-1">
+                        <button onclick="switchView('contracts')" id="tab-contracts" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-theme-brown shadow-sm">
+                            契約列表
+                        </button>
+                        <button onclick="switchView('crm')" id="tab-crm" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-theme-sub hover:bg-white/50">
+                            客戶管理
+                        </button>
+                    </div>
                 </div>
                 <div class="relative group">
                     <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-theme-sub/50 group-focus-within:text-theme-orange transition-colors"></i>
@@ -209,7 +219,6 @@ appearance: none;
                            class="input-minimal pl-10 py-2.5 text-sm bg-white/80">
                 </div>
             </div>
-
             <!-- 列表容器 -->
             <div id="content-area" class="space-y-3">
                 <div class="text-center py-10 text-theme-sub/50">載入中...</div>
@@ -335,11 +344,87 @@ appearance: none;
     const SUPABASE_KEY = 'sb_publishable_DQs8LxhRWCms6OcCspB8Jw_Xnm97iBk';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 全域變數
+// 全域變數
     let fullDataList = [];
+    let customerList = []; // CRM 聚合後的客戶資料
+    let currentView = 'contracts'; // 'contracts' 或 'crm'
     let currentItem = null;
-    let pendingAction = null; // 儲存待執行的動作 ('save' 或 'delete')
+    let pendingAction = null; 
 
+    // 切換視圖功能
+    function switchView(view) {
+        currentView = view;
+        const btnContracts = document.getElementById('tab-contracts');
+        const btnCrm = document.getElementById('tab-crm');
+        const title = document.getElementById('page-title');
+        const searchInput = document.getElementById('search-input');
+
+        // 更新按鈕樣式
+        const activeClass = ['bg-white', 'text-theme-brown', 'shadow-sm'];
+        const inactiveClass = ['text-theme-sub', 'hover:bg-white/50'];
+
+        if (view === 'contracts') {
+            btnContracts.classList.add(...activeClass);
+            btnContracts.classList.remove(...inactiveClass);
+            btnCrm.classList.remove(...activeClass);
+            btnCrm.classList.add(...inactiveClass);
+            title.innerText = '美容契約列表';
+            searchInput.value = ''; // 切換時清空搜尋
+            renderDataList(fullDataList);
+        } else {
+            btnCrm.classList.add(...activeClass);
+            btnCrm.classList.remove(...inactiveClass);
+            btnContracts.classList.remove(...activeClass);
+            btnContracts.classList.add(...inactiveClass);
+            title.innerText = '客戶 CRM 管理';
+            searchInput.value = '';
+            processCustomerData(); // 聚合客戶資料
+            renderCustomerList(customerList);
+        }
+    }
+
+    // 聚合客戶資料 (將契約轉為客戶)
+    function processCustomerData() {
+        const map = new Map();
+        
+        fullDataList.forEach(contract => {
+            // 使用電話作為唯一識別，若無電話則跳過
+            const phone = contract.owner_phone;
+            if (!phone) return;
+
+            if (!map.has(phone)) {
+                map.set(phone, {
+                    owner_name: contract.owner_name,
+                    owner_phone: phone,
+                    pets: new Set(), // 使用 Set 避免重複寵物名
+                    total_visits: 0,
+                    total_spent: 0,
+                    last_visit: contract.created_at,
+                    contracts: [] // 儲存該客戶所有合約 ID
+                });
+            }
+
+            const customer = map.get(phone);
+            customer.pets.add(contract.pet_name);
+            customer.total_visits += 1;
+            // 處理金額加總 (需轉為數字)
+            const amount = parseInt(contract.amount) || 0;
+            customer.total_spent += amount;
+            
+            // 更新最後來店日 (假設資料已按時間排序，第一筆是最新的)
+            if (new Date(contract.created_at) > new Date(customer.last_visit)) {
+                customer.last_visit = contract.created_at;
+            }
+            
+            customer.contracts.push(contract);
+        });
+
+        // 轉回陣列並轉換 Set 為字串
+        customerList = Array.from(map.values()).map(c => ({
+            ...c,
+            pets: Array.from(c.pets)
+        })).sort((a, b) => new Date(b.last_visit) - new Date(a.last_visit)); // 按最後來店日排序
+    }
     // 檢查登入狀態
     async function checkSession() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -505,29 +590,164 @@ appearance: none;
     }
 
 
-    // 搜尋功能 (加入防抖 Debounce)
+// 搜尋功能 (支援兩種視圖)
     let searchTimeout;
-document.getElementById('search-input').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const clearBtn = document.getElementById('clear-search');
-    
-    // 控制清除按鈕顯示/隱藏
-    if (term.length > 0) {
-        clearBtn.classList.remove('hidden');
-    } else {
-        clearBtn.classList.add('hidden');
-    }
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        const filtered = fullDataList.filter(item => 
-            (item.owner_name && item.owner_name.includes(term)) ||
-            (item.owner_phone && item.owner_phone.includes(term)) ||
-            (item.pet_name && item.pet_name.includes(term))
-        );
-        renderDataList(filtered);
-    }, 500);
-});
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (currentView === 'contracts') {
+                const filtered = fullDataList.filter(item => 
+                    (item.owner_name && item.owner_name.includes(term)) ||
+                    (item.owner_phone && item.owner_phone.includes(term)) ||
+                    (item.pet_name && item.pet_name.includes(term))
+                );
+                renderDataList(filtered);
+            } else {
+                // 客戶搜尋邏輯
+                const filtered = customerList.filter(item => 
+                    (item.owner_name && item.owner_name.includes(term)) ||
+                    (item.owner_phone && item.owner_phone.includes(term)) ||
+                    item.pets.some(pet => pet.includes(term))
+                );
+                renderCustomerList(filtered);
+            }
+        }, 500);
+    });
 
+    // 渲染客戶列表 (CRM View)
+    function renderCustomerList(data) {
+        const container = document.getElementById('content-area');
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-16">
+                    <div class="w-20 h-20 bg-theme-sub/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                         <i data-lucide="users" class="w-10 h-10 text-theme-sub/30"></i>
+                    </div>
+                    <p class="text-theme-sub font-bold">暫無符合的客戶</p>
+                </div>`;
+            lucide.createIcons();
+            return;
+        }
+
+        container.innerHTML = data.map((item) => {
+            const lastDate = new Date(item.last_visit).toLocaleDateString('zh-TW');
+            
+            // VIP 標籤：消費超過 5 次或 5000 元 (可自行調整規則)
+            const isVip = item.total_visits >= 5 || item.total_spent >= 5000;
+            const vipTag = isVip ? `<i data-lucide="crown" class="w-3 h-3 text-theme-orange fill-theme-orange ml-1"></i>` : '';
+
+            return `
+            <div onclick="openCustomerModal('${item.owner_phone}')" class="glass-panel p-5 rounded-2xl flex justify-between items-center cursor-pointer hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 group border-l-4 border-l-transparent hover:border-l-theme-brown">
+                <div class="flex items-center gap-4 w-full overflow-hidden">
+                    <div class="w-12 h-12 rounded-full bg-theme-brown text-white flex items-center justify-center font-bold text-lg shrink-0">
+                        ${item.owner_name ? item.owner_name[0] : '?'}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1">
+                            <h3 class="font-bold text-theme-brown text-lg truncate flex items-center">${item.owner_name} ${vipTag}</h3>
+                            <span class="text-xs text-theme-sub bg-gray-100 px-2 py-0.5 rounded-full ml-2">${item.pets.length} 隻寵物</span>
+                        </div>
+                        
+                        <div class="text-sm text-theme-orange truncate font-medium mt-0.5">
+                            ${item.pets.join('、')}
+                        </div>
+                        
+                        <div class="flex items-center gap-3 mt-2 text-xs text-theme-sub font-medium truncate">
+                            <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> 最後來店: ${lastDate}</span>
+                            <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span class="flex items-center gap-1"><i data-lucide="shopping-bag" class="w-3 h-3"></i> ${item.total_visits} 次</span>
+                            <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span class="flex items-center gap-1">累積 $${item.total_spent.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right hidden sm:block pl-4 shrink-0">
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-300 group-hover:text-theme-orange transition-colors"></i>
+                </div>
+            </div>`;
+        }).join('');
+        
+        lucide.createIcons();
+    }
+
+    // 開啟客戶詳情 (顯示歷史合約)
+    function openCustomerModal(phone) {
+        const customer = customerList.find(c => c.owner_phone === phone);
+        if (!customer) return;
+
+        // 這裡我們借用原本的 Modal 結構，但改寫內容
+        const content = document.getElementById('modal-content');
+        document.getElementById('modal-id').innerText = `CRM | ${customer.owner_name}`;
+        
+        // 隱藏不必要的按鈕 (CRM 模式下暫不支援編輯客戶資料，因為是聚合的)
+        document.getElementById('btn-edit').classList.add('hidden');
+        document.getElementById('btn-save').classList.add('hidden');
+        
+// 渲染歷史紀錄
+        const historyHtml = customer.contracts.map(c => {
+            const date = new Date(c.created_at).toLocaleDateString('zh-TW');
+            return `
+                <div onclick="openModal('${c.id}')" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white mb-2 cursor-pointer hover:bg-white hover:shadow-md transition-all active:scale-[0.98] group">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-theme-brown group-hover:text-theme-orange transition-colors">${c.pet_name}</span>
+                            <span class="text-xs text-theme-sub bg-theme-orange/10 text-theme-orange px-2 py-0.5 rounded">${c.services && c.services.length > 0 ? c.services.join(',') : '一般服務'}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                            ${date} <i data-lucide="chevron-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-theme-orange"></i>
+                        </div>
+                    </div>
+                    <div class="font-bold text-theme-brown">$${c.amount}</div>
+                </div>
+            `;
+        }).join('');
+        const html = `
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-theme-brown text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-3 shadow-lg">
+                    ${customer.owner_name[0]}
+                </div>
+                <h2 class="text-2xl font-bold text-theme-brown">${customer.owner_name}</h2>
+                <div class="flex justify-center items-center gap-2 mt-2 text-theme-sub">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                    <a href="tel:${customer.owner_phone}" class="hover:text-theme-orange transition underline underline-offset-4">${customer.owner_phone}</a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-theme-orange/5 p-4 rounded-xl text-center">
+                    <div class="text-xs text-theme-sub mb-1 uppercase tracking-widest">累積消費</div>
+                    <div class="text-xl font-black text-theme-orange">$${customer.total_spent.toLocaleString()}</div>
+                </div>
+                <div class="bg-theme-brown/5 p-4 rounded-xl text-center">
+                    <div class="text-xs text-theme-sub mb-1 uppercase tracking-widest">來店次數</div>
+                    <div class="text-xl font-black text-theme-brown">${customer.total_visits} <span class="text-xs">次</span></div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-5 border border-white/60">
+                <h3 class="font-bold text-theme-brown text-sm mb-4 flex items-center gap-2">
+                    <i data-lucide="history" class="w-4 h-4 text-theme-orange"></i> 消費紀錄
+                </h3>
+                <div class="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    ${historyHtml}
+                </div>
+            </div>
+        `;
+
+        content.innerHTML = html;
+        lucide.createIcons();
+
+        const modal = document.getElementById('detail-modal');
+        const panel = document.getElementById('modal-panel');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            panel.classList.remove('translate-y-full');
+        }, 10);
+    }
 
     // 開啟詳情彈窗
     function openModal(id) {
