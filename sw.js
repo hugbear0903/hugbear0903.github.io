@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hugbear-v5';
+const CACHE_NAME = 'hugbear-v6';
 const ASSETS = [
     './',
     './index.html',
@@ -60,6 +60,7 @@ self.addEventListener('fetch', (event) => {
             })
     );
 });
+
 
 
 
