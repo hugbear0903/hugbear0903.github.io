@@ -1300,9 +1300,11 @@
                 document.querySelector('input[name="emergencyPhone"]').value = data.emergency_phone || '';
                 document.querySelector('input[name="hospital"]').value = data.hospital || '';
 
-                // 2. 填入寵物資料
-                document.querySelector('input[name="petName"]').value = data.pet_name || '';
-                document.querySelector('input[name="breed"]').value = data.breed || '';
+// 2. 填入寵物資料
+                // 新增這一行：回填寵物種類
+                this.setRadioValue('petType', data.pet_type || 'dog');
+                
+                document.querySelector('input[name="petName"]').value = data.pet_name || '';                document.querySelector('input[name="breed"]').value = data.breed || '';
                 document.querySelector('input[name="color"]').value = data.color || '';
                 document.querySelector('input[name="age"]').value = data.age || '';
                 
@@ -1789,11 +1791,13 @@ inputs.forEach(input => {
                         owner_phone: formData.get('ownerPhone'),
                         owner_address: formData.get('ownerAddress'),
                         emergency_contact: formData.get('emergencyContact'),
-                        emergency_phone: formData.get('emergencyPhone'),
+emergency_phone: formData.get('emergencyPhone'),
                         hospital: formData.get('hospital'),
                         
-                        pet_name: formData.get('petName'),
-                        breed: formData.get('breed'),
+                        // 新增這一行
+                        pet_type: formData.get('petType'),
+                        
+                        pet_name: formData.get('petName'),                        breed: formData.get('breed'),
                         color: formData.get('color'),
                         age: parseFloat(formData.get('age')),
                         chip_status: formData.get('chipStatus'),
@@ -2089,11 +2093,15 @@ showDownloadPage: function(contractData, hasEmail) {
                                 <tr style="background-color: #f8f8f8;">
                                     <td colspan="2" style="border-bottom: 2px solid #eee; color: #8D6E63; font-weight: bold; padding-top: 20px;">🐾 寵物資料</td>
                                 </tr>
-                                <tr>
+<tr>
                                     <td style="border-bottom: 1px solid #eee; color: #888;">寵物名字</td>
-                                    <td style="border-bottom: 1px solid #eee;"><strong style="font-size: 16px; color: #5D4037;">${data.pet_name}</strong></td>
-                                </tr>
-                                <tr>
+                                    <td style="border-bottom: 1px solid #eee;">
+                                        <span style="background:#eee; color:#555; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:4px;">
+                                            ${data.pet_type === 'cat' ? '貓咪' : '狗狗'}
+                                        </span>
+                                        <strong style="font-size: 16px; color: #5D4037;">${data.pet_name}</strong>
+                                    </td>
+                                </tr>                                <tr>
                                     <td style="border-bottom: 1px solid #eee; color: #888;">品種/特徵</td>
                                     <td style="border-bottom: 1px solid #eee;">
                                         ${data.breed} / ${data.color} / ${data.age}歲 / ${mapSex(data.sex)}
@@ -2193,7 +2201,7 @@ showDownloadPage: function(contractData, hasEmail) {
                 if ('serviceWorker' in navigator) {
                     window.addEventListener('load', async () => {
                         try {
-                            const registration = await navigator.serviceWorker.register('./sw.js');
+                            const registration = await navigator.serviceWorker.register('./sw.js?v=1');
                             registration.addEventListener('updatefound', () => {
                                 const newWorker = registration.installing;
                                 newWorker.addEventListener('statechange', () => {
