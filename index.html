@@ -603,7 +603,10 @@
                                 </label>
                             </div>
                         </div>
-
+<div>
+                            <label>不喜歡被碰觸的部位</label>
+                            <input type="text" name="dislikeTouch" class="input-minimal" placeholder="例如：前腳、尾巴、耳朵... (若無可不填)">
+                        </div>
                         <div>
                             <label>過往病史<span class="text-theme-orange">*</span></label>
                             <div class="flex gap-2 radio-btn-group mb-2">
@@ -1333,10 +1336,13 @@
                 this.setRadioValue('sex', data.sex);
                 this.setRadioValue('neutered', data.neutered);
                 this.setRadioValue('friendlyToPeople', data.friendly_to_people);
-                this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
+this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                 this.setRadioValue('aggressive', data.aggressive);
-                this.setRadioValue('hasMedicalHistory', data.has_medical_history);
                 
+                // 新增這一行：回填敏感部位
+                document.querySelector('input[name="dislikeTouch"]').value = data.dislike_touch || '';
+                
+                this.setRadioValue('hasMedicalHistory', data.has_medical_history);                
                 // 5. 填入病史描述
                 document.querySelector('input[name="medicalHistory"]').value = data.medical_history || '';
             },
@@ -1805,10 +1811,13 @@ emergency_phone: formData.get('emergencyPhone'),
                         sex: formData.get('sex'),
                         neutered: formData.get('neutered'),
                         friendly_to_people: formData.get('friendlyToPeople'),
-                        friendly_to_dogs: formData.get('friendlyToDogs'),
+friendly_to_dogs: formData.get('friendlyToDogs'),
                         aggressive: formData.get('aggressive'),
-                        has_medical_history: formData.get('hasMedicalHistory'),
-                        medical_history: formData.get('medicalHistory'),
+                        
+                        // 新增這一行
+                        dislike_touch: formData.get('dislikeTouch'),
+                        
+                        has_medical_history: formData.get('hasMedicalHistory'),                        medical_history: formData.get('medicalHistory'),
                         
                         check_eye: formData.get('check_eye'),
                         eye_description: formData.get('eyeDescription'),
@@ -2115,9 +2124,9 @@ showDownloadPage: function(contractData, hasEmail) {
                                     <td style="border-bottom: 1px solid #eee; color: #888;">健康行為</td>
                                     <td style="border-bottom: 1px solid #eee;">
                                         結紮: ${mapBool(data.neutered)} / 親人: ${mapBool(data.friendly_to_people)} / 親狗: ${mapBool(data.friendly_to_dogs)}<br>
-                                        <span style="color: #D98E4F;">攻擊性: ${mapBool(data.aggressive)}</span> / 
-                                        <span style="color: ${data.has_medical_history === 'yes' ? '#D98E4F' : 'inherit'};">病史: ${mapBool(data.has_medical_history)}</span>
-                                        ${data.medical_history ? `<br><span style="font-size:12px; color:#666;">(病史說明: ${data.medical_history})</span>` : ''}
+<span style="color: #D98E4F;">攻擊性: ${mapBool(data.aggressive)}</span> / 
+                                        <span>敏感部位: <span style="color: ${data.dislike_touch ? '#D98E4F' : 'inherit'}; font-weight: bold;">${data.dislike_touch || '無'}</span></span> /
+                                        <span style="color: ${data.has_medical_history === 'yes' ? '#D98E4F' : 'inherit'};">病史: ${mapBool(data.has_medical_history)}</span>                                        ${data.medical_history ? `<br><span style="font-size:12px; color:#666;">(病史說明: ${data.medical_history})</span>` : ''}
                                     </td>
                                 </tr>
 
