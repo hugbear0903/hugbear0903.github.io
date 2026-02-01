@@ -432,8 +432,14 @@
                             <div class="error-message">請輸入飼主姓名</div>
                         </div>
 <div>
-    <label>電子信箱</label>
-    <input type="email" name="ownerEmail" class="input-minimal" placeholder="選填，用於接收契約副本">
+    <div class="flex items-center gap-3 mb-1.5">
+        <label class="mb-0 font-bold">電子信箱<span class="text-theme-orange text-xs email-required-star">*</span></label>
+        <label class="flex items-center gap-1.5 cursor-pointer bg-theme-brown/5 px-2.5 py-1 rounded-full border border-theme-brown/10 active:scale-95 transition-all select-none">
+            <input type="checkbox" id="noEmailCheck" onchange="app.toggleNoEmail()" class="w-4 h-4 accent-theme-brown">
+            <span class="text-[11px] font-bold text-theme-sub">無電子信箱</span>
+        </label>
+    </div>
+    <input type="email" name="ownerEmail" class="input-minimal" placeholder="用於接收契約副本" required>
     <div class="error-message">請輸入有效的電子信箱</div>
 </div>
                         <div>
@@ -1023,7 +1029,7 @@
     </div>
 
     <script>
-        // 應用程序主對象
+// 應用程序主對象
         const app = {
             lastContractData: null, 
             // 初始化 Supabase
@@ -1031,6 +1037,24 @@
             
             // 初始化
             init: function() {
+                // 初始化 Supabase 客戶端
+                this.supabase = supabase.createClient(
+                    'https://slkfbsvxoriqmwoeobop.supabase.co',
+                    'sb_publishable_DQs8LxhRWCms6OcCspB8Jw_Xnm97iBk'
+                );
+                
+                // 初始化圖標
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+
+                // 載入暫存草稿
+                this.loadDraft();
+
+                // 監聽所有輸入以自動儲存
+                document.getElementById('contractForm').addEventListener('input', () => {
+                    this.saveDraft();
+                });
                 // 初始化 Supabase 客戶端
                 // 替換為你的 Supabase 專案 URL 和 anon key
                 this.supabase = supabase.createClient(
@@ -1871,12 +1895,13 @@ friendly_to_dogs: formData.get('friendlyToDogs'),
                         });
                     }
 
-                    this.lastContractData = contractData; // 暫存資料給新視窗用
+this.lastContractData = contractData; // 暫存資料給新視窗用
                     this.showToast('契約已成功提交！', 'success');
                     this.showDownloadPage(contractData, hasEmail);
                     
-                    // 重置表單
+                    // 重置表單並清除暫存
                     document.getElementById('contractForm').reset();
+                    localStorage.removeItem('hugbear_contract_draft');
                     this.resetSignature();
                     
                 } catch (error) {
@@ -2205,6 +2230,99 @@ showDownloadPage: function(contractData, hasEmail) {
                 `;
             },
 
+// 電子信箱切換邏輯
+            toggleNoEmail: function() {
+                const isNoEmail = document.getElementById('noEmailCheck').checked;
+                const emailInput = document.querySelector('input[name="ownerEmail"]');
+                const star = document.querySelector('.email-required-star');
+                
+                if (isNoEmail) {
+                    emailInput.value = '無';
+                    emailInput.disabled = true;
+                    emailInput.required = false;
+                    emailInput.classList.remove('input-error');
+                    star.classList.add('hidden');
+                } else {
+                    emailInput.value = '';
+                    emailInput.disabled = false;
+                    emailInput.required = true;
+                    star.classList.remove('hidden');
+                }
+                this.saveDraft();
+            },
+
+            // 儲存草稿
+            saveDraft: function() {
+                const form = document.getElementById('contractForm');
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    // 排除敏感或不需要儲存的欄位
+                    if (key !== 'signatureData' && key !== 'ownerId') {
+                        if (!data[key]) {
+                            data[key] = value;
+                        } else {
+                            if (!Array.isArray(data[key])) data[key] = [data[key]];
+                            data[key].push(value);
+                        }
+                    }
+                });
+                data.noEmail = document.getElementById('noEmailCheck').checked;
+                localStorage.setItem('hugbear_contract_draft', JSON.stringify(data));
+            },
+
+// 載入草稿
+            loadDraft: function() {
+                const saved = localStorage.getItem('hugbear_contract_draft');
+                if (!saved) return;
+
+                const data = JSON.parse(saved);
+                
+                // 檢查是否有足夠的資料值得恢復（排除只有 noEmail 的情況）
+                if (Object.keys(data).length <= 2) return;
+
+                // 彈出詢問視窗
+                if (confirm('偵測到您上次有未完成的內容，是否要恢復填寫？')) {
+                    // 使用者選擇：恢復資料
+                    
+                    // 先處理信箱狀態
+                    if (data.noEmail) {
+                        document.getElementById('noEmailCheck').checked = true;
+                        this.toggleNoEmail();
+                    }
+
+                    // 填入其餘資料
+                    const form = document.getElementById('contractForm');
+                    Object.keys(data).forEach(key => {
+                        const field = form.elements[key];
+                        if (!field || key === 'noEmail') return;
+
+                        if (field.type === 'radio') {
+                            this.setRadioValue(key, data[key]);
+                        } else if (field.type === 'checkbox') {
+                            const vals = Array.isArray(data[key]) ? data[key] : [data[key]];
+                            const checkboxes = document.querySelectorAll(`input[name="${key}"]`);
+                            checkboxes.forEach(cb => {
+                                if (vals.includes(cb.value)) {
+                                    cb.checked = true;
+                                    if (cb.id === 'chk-other-service') this.toggleOtherServiceInput();
+                                }
+                            });
+                        } else if (key === 'pickupTime') {
+                            if (data[key] === '將另行通知接回時間') this.toggleTime();
+                            else field.value = data[key];
+                        } else {
+                            field.value = data[key];
+                        }
+                    });
+                    this.showToast('已恢復填寫內容', 'success');
+                } else {
+                    // 使用者選擇：不恢復，清除暫存
+                    localStorage.removeItem('hugbear_contract_draft');
+                    this.showToast('已清除暫存草稿', 'info');
+                }
+            },
+
             // 註冊 Service Worker
             registerServiceWorker: function() {
                 if ('serviceWorker' in navigator) {
@@ -2263,4 +2381,3 @@ showDownloadPage: function(contractData, hasEmail) {
 </div>
 </body>
 </html>
-
