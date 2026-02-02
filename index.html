@@ -2338,7 +2338,7 @@ registerServiceWorker: function() {
                     window.addEventListener('load', async () => {
                         try {
                             // 這裡的 v= 數字，只有在你更新了 sw.js 內容或想強制刷新時才改它
-                            const registration = await navigator.serviceWorker.register('./sw.js?v=20260202v1');
+                            const registration = await navigator.serviceWorker.register('./sw.js?v=20260202v2');
                             
                             // 正常的更新檢查
                             registration.addEventListener('updatefound', () => {

@@ -1,5 +1,5 @@
 // 每次修改代碼後，請務必更換這個版本號（例如改日期）
-const CACHE_NAME = 'hugbear-20260202-v1'; 
+const CACHE_NAME = 'hugbear-20260202-v2'; 
 const ASSETS = [
     './',
     './index.html',
