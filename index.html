@@ -1815,9 +1815,12 @@ inputs.forEach(input => {
                     
                     // 準備要上傳的資料物件
 const contractData = {
-                        owner_name: formData.get('ownerName'),
-                        // 若客戶勾選「無電子信箱」，則存入店家信箱作為備份，同時符合資料庫格式
-                        owner_email: formData.get('ownerEmail') === '無' ? 'hugbear0903@gmail.com' : formData.get('ownerEmail'),
+owner_name: formData.get('ownerName'),
+                        // 修正：當勾選「無信箱」時，input 變為 disabled，FormData 會抓到 null
+                        // 我們需手動檢查，若為 null 或字串 "無"，則強制存入店家備份信箱
+                        owner_email: (formData.get('ownerEmail') && formData.get('ownerEmail') !== '無') 
+                                     ? formData.get('ownerEmail') 
+                                     : 'hugbear0903@gmail.com',
                         owner_id: formData.get('ownerId'),                        owner_phone: formData.get('ownerPhone'),
                         owner_address: formData.get('ownerAddress'),
                         emergency_contact: formData.get('emergencyContact'),
