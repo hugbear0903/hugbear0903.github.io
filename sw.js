@@ -21,7 +21,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => cache.addAll(ASSETS))
-            .then(() => self.skipWaiting()) // 讓新 SW 立即進入等待狀態
+            // 移除這裡的 skipWaiting，改由 index.html 的按鈕控制
     );
 });
 
