@@ -1814,11 +1814,11 @@ inputs.forEach(input => {
                     });
                     
                     // 準備要上傳的資料物件
-                    const contractData = {
+const contractData = {
                         owner_name: formData.get('ownerName'),
-                        owner_email: formData.get('ownerEmail'),
-                        owner_id: formData.get('ownerId'),
-                        owner_phone: formData.get('ownerPhone'),
+                        // 若客戶勾選「無電子信箱」，則存入店家信箱作為備份，同時符合資料庫格式
+                        owner_email: formData.get('ownerEmail') === '無' ? 'hugbear0903@gmail.com' : formData.get('ownerEmail'),
+                        owner_id: formData.get('ownerId'),                        owner_phone: formData.get('ownerPhone'),
                         owner_address: formData.get('ownerAddress'),
                         emergency_contact: formData.get('emergencyContact'),
 emergency_phone: formData.get('emergencyPhone'),
@@ -1877,11 +1877,11 @@ friendly_to_dogs: formData.get('friendlyToDogs'),
                     if (error) throw error;
 
                     // ★★★ 修改重點：統一處理後續動作 ★★★
-                    const emailValue = formData.get('ownerEmail');
-                    const hasEmail = emailValue && emailValue.trim() !== '';
+// 使用處理過的 contractData.owner_email 來判斷
+                    const emailToUse = contractData.owner_email;
+                    const hasEmail = emailToUse && emailToUse !== '無';
 
-                    if (hasEmail) {
-                        // Email 不為空，執行寄信 (不等待寄信結果)
+                    if (hasEmail) {                        // Email 不為空，執行寄信 (不等待寄信結果)
                         this.supabase.functions.invoke('send-mail', {
                             body: { 
                                 email: contractData.owner_email,
@@ -2338,7 +2338,7 @@ registerServiceWorker: function() {
                     window.addEventListener('load', async () => {
                         try {
                             // 這裡的 v= 數字，只有在你更新了 sw.js 內容或想強制刷新時才改它
-                            const registration = await navigator.serviceWorker.register('./sw.js?v=20260202v2');
+                            const registration = await navigator.serviceWorker.register('./sw.js?v=99');
                             
                             // 正常的更新檢查
                             registration.addEventListener('updatefound', () => {
