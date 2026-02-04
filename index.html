@@ -1464,12 +1464,16 @@ const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
 
 // 開啟全螢幕簽名板
             openSignatureModal: function() {
+                // 記錄開啟前的捲動位置，防止關閉後跳回頂部
+                this.savedScrollY = window.scrollY;
+
                 const modal = document.getElementById('signature-modal');
                 modal.classList.remove('hidden');
                 
                 // 徹底鎖死背景捲動 (針對 Line/iOS WebView 優化)
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
+                document.body.style.top = `-${this.savedScrollY}px`; // 鎖定在當前高度
                 document.body.style.width = '100%';
 
                 // 攔截並阻止畫布區域以外的滑動事件
@@ -1496,12 +1500,24 @@ const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
                 // 恢復背景捲動
                 document.body.style.overflow = '';
                 document.body.style.position = '';
+                document.body.style.top = '';
                 document.body.style.width = '';
                 
+                // 恢復到開啟前的位置
+                window.scrollTo(0, this.savedScrollY || 0);
+
                 // 移除滑動攔截
                 if (this.preventScroll) {
                     document.removeEventListener('touchmove', this.preventScroll);
                 }
+
+                // 強制滾動到簽名區塊 (確保使用者看到簽名結果與提交按鈕)
+                setTimeout(() => {
+                    const target = document.getElementById('signature-section');
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
             },
 
             // 清除畫布
@@ -1535,11 +1551,8 @@ const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
                 document.getElementById('signature-result').classList.remove('hidden');
                 document.getElementById('btn-clear-result').classList.remove('hidden');
 
-                // 4. 關閉 Modal 並捲動到底部
+// 4. 關閉 Modal (捲動邏輯已整合在 closeSignatureModal 內)
                 this.closeSignatureModal();
-                setTimeout(() => {
-                    document.getElementById('signature-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
                 
                 // 5. 觸發按鈕狀態檢查
                 this.toggleSubmitBtn();
