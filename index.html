@@ -327,6 +327,43 @@
         .toast.hiding {
             animation: slide-out-right 0.3s ease-in forwards;
         }
+
+/* 錯誤提示 */
+.error-message {
+    color: #EF4444;
+    font-size: 0.75rem; /* 12px */
+    margin-top: 0.25rem; /* 4px */
+    display: none; /* 預設隱藏 */
+    font-weight: bold;
+}
+
+/* 當 input.input-error 時顯示其後緊鄰的 .error-message */
+.input-error + .error-message {
+    display: block;
+}
+
+/* 當 radio/checkbox 的容器被標記為 error 時，也顯示錯誤訊息 */
+.group-error + .error-message {
+    display: block;
+}
+
+/* 讓 radio/checkbox 容器出錯時有紅色外框 */
+.group-error .border {
+    border-color: #EF4444 !important;
+}
+
+        /* 錯誤抖動動畫 */
+        .shake-error {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
     </style>
 </head>
 
@@ -1596,155 +1633,212 @@ const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
                 }
             },
 
-            // 表單驗證 (強化版)
+            // 表單驗證 (客戶端除錯版)
             validateForm: function() {
                 const form = document.getElementById('contractForm');
-                let isValid = true;
-                let firstErrorInput = null;
+                const errors = []; 
 
-// --- 1. 基礎欄位驗證 (利用 HTML5 checkValidity) ---
-// 這會檢查所有有 required 屬性的 input, select, textarea
-const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+                // --- 0. 重置所有舊的錯誤狀態 ---
+                form.querySelectorAll('.input-error, .group-error').forEach(el => {
+                    el.classList.remove('input-error', 'group-error');
+                });
+                form.querySelectorAll('.shake-error').forEach(el => el.classList.remove('shake-error'));
+                document.getElementById('btn-open-pad').classList.remove('border-red-500', 'animate-pulse');
+                
+                // 移除舊的回報按鈕
+                const oldDebugBtn = document.getElementById('debug-report-btn');
+                if (oldDebugBtn) oldDebugBtn.remove();
 
-inputs.forEach(input => {
-    // 先移除舊的錯誤樣式
-    input.classList.remove('input-error');
-    
-    // 特別處理 Email 欄位：只有在有值時才驗證格式
-    if (input.name === 'ownerEmail' && input.value.trim() !== '') {
-        if (!input.checkValidity()) {
-            isValid = false;
-            input.classList.add('input-error');
-            
-            // 記錄第一個錯誤位置，方便稍後捲動
-            if (!firstErrorInput) firstErrorInput = input;
+                // --- 1. 建立欄位名稱對應表 (讓錯誤訊息更人性化) ---
+                const friendlyNames = {
+                    ownerName: '飼主姓名',
+                    ownerEmail: '電子信箱',
+                    ownerId: '身分證字號',
+                    ownerPhone: '聯絡手機',
+                    ownerAddress: '通訊地址',
+                    emergencyContact: '緊急聯絡人',
+                    emergencyPhone: '緊急電話',
+                    petName: '寵物名字',
+                    breed: '品種',
+                    age: '寵物年齡',
+                    chipNumber: '晶片號碼',
+                    medicalHistory: '過往病史描述',
+                    payment: '支付方式',
+                    amount: '支付金額',
+                    sex: '性別',
+                    neutered: '結紮',
+                    friendlyToPeople: '親人',
+                    friendlyToDogs: '親狗',
+                    aggressive: '具攻擊性',
+                    hasMedicalHistory: '過往病史',
+                    check_eye: '眼睛檢查',
+                    check_ear: '耳朵檢查',
+                    check_tooth: '牙齒檢查',
+                    check_limb: '四肢檢查',
+                    check_skin: '皮膚檢查',
+                    check_fur: '皮毛檢查'
+                };
 
-            // 監聽輸入，一修正就移除紅框
-            input.addEventListener('input', function() {
-                if (this.checkValidity() || this.value.trim() === '') {
-                    this.classList.remove('input-error');
-                }
-            }, { once: true });
-        }
-    } else if (input.name !== 'ownerEmail') {
-        // 非 Email 欄位的正常驗證
-        if (!input.checkValidity()) {
-            isValid = false;
-            input.classList.add('input-error');
-            
-            // 記錄第一個錯誤位置，方便稍後捲動
-            if (!firstErrorInput) firstErrorInput = input;
+                // --- 2. 基礎必填欄位驗證 ---
+                const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+                
+                requiredFields.forEach(field => {
+                    if (field.offsetParent === null || field.disabled) return;
 
-            // 監聽輸入，一修正就移除紅框
-            input.addEventListener('input', function() {
-                if (this.checkValidity()) {
-                    this.classList.remove('input-error');
-                }
-            }, { once: true });
-        }
-    }
-});
-
-                // --- 2. 進階邏輯驗證 (補足 HTML5 做不到的事) ---
-
-                // A. 檢查「本次服務內容」是否至少選一項
-                const services = document.querySelectorAll('input[name="service"]:checked');
-                if (services.length === 0) {
-                    isValid = false;
-                    const serviceSection = document.querySelector('input[name="service"]').closest('section');
-                    serviceSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    this.showToast('請至少選擇一項服務內容', 'error');
-                    return false; // 直接返回，因為已經捲動了
-                }
-
-                // B. 檢查「支付方式」是否已選
-                const payment = document.querySelector('input[name="payment"]:checked');
-                if (!payment) {
-                    isValid = false;
-                    const paymentSection = document.querySelector('input[name="payment"]').closest('section');
-                    if (!firstErrorInput) firstErrorInput = paymentSection;
-                }
-
-                // C. 檢查「支付金額」是否大於 0
-                const amountInput = document.querySelector('input[name="amount"]');
-                const amountVal = parseFloat(amountInput.value);
-                if (isNaN(amountVal) || amountVal <= 0) {
-                    isValid = false;
-                    amountInput.classList.add('input-error');
-                    if (!firstErrorInput) firstErrorInput = amountInput;
-                }
-
-                // D. 檢查「同意條款」是否已勾選
-                const termsCheck = document.getElementById('termsCheck');
-                if (!termsCheck || !termsCheck.checked) {
-                    isValid = false;
-                    const termsSection = document.getElementById('termsCheck').closest('section');
-                    if (!firstErrorInput) firstErrorInput = termsSection;
-                }
-
-                // E. 檢查「晶片號碼」：如果選了有晶片，必須填號碼
-                const chipStatus = document.getElementById('chipSelect').value;
-                const chipInput = document.getElementById('chipInput');
-                if (chipStatus === 'has' && (!chipInput.value || chipInput.value.trim() === '')) {
-                    isValid = false;
-                    chipInput.classList.add('input-error');
-                    if (!firstErrorInput) firstErrorInput = chipInput;
-                }
-
-                // F. 檢查「身體狀態異常描述」：如果選了異常，必須填描述
-                const checkItems = ['eye', 'ear', 'tooth', 'limb', 'skin', 'fur'];
-                checkItems.forEach(item => {
-                    const radioVal = document.querySelector(`input[name="check_${item}"]:checked`)?.value;
-                    const descInput = document.querySelector(`input[name="${item}Description"]`);
-                    
-                    if (radioVal === '異常' && (!descInput.value || descInput.value.trim() === '')) {
-                        isValid = false;
-                        descInput.classList.add('input-error');
-                        if (!firstErrorInput) firstErrorInput = descInput;
+                    if (!field.checkValidity()) {
+                        const name = field.name || field.id;
+                        errors.push({ element: field, friendlyName: friendlyNames[name] || name, reason: '此為必填項目，或格式不正確' });
                     }
                 });
-                // G. 檢查「預計接回時間」
-                const timeInput = document.getElementById('timeInput');
-                const notifyBtn = document.getElementById('btn-notify');
+
+                // --- 3. 進階邏輯驗證 ---
+                if (form.querySelectorAll('input[name="service"]:checked').length === 0) {
+                    errors.push({ element: form.querySelector('input[name="service"]').closest('section'), friendlyName: '本次服務內容', reason: '必須至少選擇一項' });
+                }
+
+                if (document.getElementById('chipSelect').value === 'has' && document.getElementById('chipInput').value.trim() === '') {
+                    errors.push({ element: document.getElementById('chipInput'), friendlyName: '晶片號碼', reason: '選擇「有晶片」時，號碼為必填' });
+                }
+
+                if (form.querySelector('input[name="hasMedicalHistory"]:checked')?.value === 'yes' && form.querySelector('input[name="medicalHistory"]').value.trim() === '') {
+                    errors.push({ element: form.querySelector('input[name="medicalHistory"]'), friendlyName: '過往病史描述', reason: '選擇「有」時，描述為必填' });
+                }
                 
-                // 判斷是否在「另行通知」模式
-                const isNotifyMode = notifyBtn.classList.contains('bg-theme-orange');
+                if (!document.getElementById('signature-data').value) {
+                    errors.push({ element: document.getElementById('signature-section'), friendlyName: '數位簽名', reason: '尚未完成簽名' });
+                }
                 
-                if (isNotifyMode) {
-                    // 如果是另行通知模式，視為已填寫 (不需檢查 timeInput.value)
-                    // 確保 timeInput 確實被鎖定且值正確 (防呆)
-                    if (timeInput.value !== '將另行通知接回時間') {
-                         timeInput.value = '將另行通知接回時間';
-                    }
-                } else {
-                    // 如果是時間選擇模式，必須有值
-                    if (!timeInput.value || timeInput.value.trim() === '') {
-                        isValid = false;
-                        timeInput.classList.add('input-error');
-                        // 如果按鈕旁邊有錯誤訊息區塊，也可以顯示 (這裡假設沒有，只標紅框)
-                        if (!firstErrorInput) firstErrorInput = timeInput;
-                    }
+                // --- 4. 最終處理 ---
+                if (errors.length > 0) {
+                    // 移除重複的錯誤 (例如一個 radio group 有多個 input 都被標記)
+                    const uniqueErrors = errors.filter((error, index, self) =>
+                        index === self.findIndex((e) => (
+                            e.element === error.element
+                        ))
+                    );
+
+                    console.warn('表單驗證失敗，詳細資訊如下：');
+                    console.table(uniqueErrors.map(e => ({ '欄位': e.friendlyName, '原因': e.reason, 'DOM元素': e.element })));
+
+                    // A. 視覺化標示所有錯誤
+                    uniqueErrors.forEach(error => {
+                        const el = error.element;
+                        if (el.matches('input, select, textarea')) {
+                            el.classList.add('input-error', 'shake-error');
+                        } else if (el.id === 'signature-section') {
+                             document.getElementById('btn-open-pad').classList.add('border-red-500', 'animate-pulse');
+                        } else {
+                            el.classList.add('shake-error');
+                        }
+                    });
+                    
+                    // B. 顯示包含具體錯誤欄位的 Toast
+                    this.showValidationErrorToast(uniqueErrors);
+                    
+                    // C. 建立並顯示「回報問題」按鈕
+                    this.createDebugButton(uniqueErrors);
+
+                    // D. 捲動到第一個錯誤
+                    const firstErrorElement = uniqueErrors[0].element;
+                    firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    return false;
                 }
 
-                // --- 3. 簽名檢查 ---
-                const signatureData = document.getElementById('signature-data').value;
-                if (!signatureData) {
-                    isValid = false;
-                    const signSection = document.getElementById('signature-section');
-                    if (!firstErrorInput) firstErrorInput = signSection;
-                }
-
-                // --- 4. 結論處理 ---
-                if (!isValid) {
-                    // 如果有錯誤，顯示通用訊息並捲動到第一個錯誤處
-                    this.showToast('請檢查標示紅色的必填欄位', 'error');
-                    if (firstErrorInput) {
-                        firstErrorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-
-                return isValid;
+                return true;
             },
+            
+            // 新增：顯示具體驗證錯誤的 Toast
+            showValidationErrorToast: function(errors) {
+                const errorNames = errors.map(e => e.friendlyName);
+                let messageHtml = `
+                    <div class="font-bold text-base mb-2">請檢查以下 ${errors.length} 個項目：</div>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        ${errorNames.map(name => `<li>${name}</li>`).join('')}
+                    </ul>
+                `;
+                this.showToast(messageHtml, 'error', 10000); // 延長顯示時間到10秒
+            },
+
+            // 新增：產生一個包含表單所有資料的 "回報問題" 按鈕 (更新版)
+            createDebugButton: function(errors) {
+                const form = document.getElementById('contractForm');
+                const formData = new FormData(form);
+                let report = "抱抱熊契約表單偵錯回報\n";
+                report += "=========================\n";
+                report += `回報時間: ${new Date().toLocaleString('zh-TW')}\n`;
+                report += "-------------------------\n";
+                report += "表單填寫內容:\n";
+                
+                for (let [key, value] of formData.entries()) {
+                    report += `- ${key}: ${value}\n`;
+                }
+
+                report += "-------------------------\n";
+                report += "系統判定的錯誤項目:\n";
+                errors.forEach(error => {
+                    report += `- ${error.friendlyName} (原因: ${error.reason})\n`;
+                });
+                report += "=========================\n";
+
+                const button = document.createElement('button');
+                button.id = 'debug-report-btn';
+                button.className = "w-full mt-4 bg-red-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg";
+                button.innerHTML = `<i data-lucide="mail" class="w-5 h-5"></i> 點此回報問題給店家`;
+                
+                // 使用 mailto: 設定主要收件人
+                // 使用 &cc= 設定副本收件人
+                const primaryEmail = 'contact@shibastudio.online';
+                const ccEmail = 'hugbear0903@gmail.com';
+                const subject = '抱抱熊契約表單問題回報';
+                
+                const mailtoLink = `mailto:${primaryEmail}?cc=${ccEmail}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(report)}`;
+                // --------------------------------
+
+                button.onclick = () => { window.location.href = mailtoLink; };
+
+                // 插入到提交按鈕的上方
+                form.querySelector('#submitBtn').before(button);
+                lucide.createIcons();
+            },
+
+
+            // 修改原有的 showToast，使其可以接收 HTML 並設定持續時間
+            showToast: function(message, type = 'info', duration = 5000) {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                let icon;
+                // ... (icon switch case 的程式碼保持不變)
+                 switch(type) {
+                    case 'success':
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                        break;
+                    case 'error':
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+                        break;
+                    case 'warning':
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+                        break;
+                    default:
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+                }
+
+                toast.innerHTML = `
+                    <div class="toast-icon">${icon}</div>
+                    <div class="toast-message">${message}</div>
+                    <div class="toast-close">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                `;
+                
+                toast.querySelector('.toast-close').addEventListener('click', () => this.hideToast(toast));
+                toastContainer.appendChild(toast);
+                
+                setTimeout(() => this.hideToast(toast), duration);
+            },
+
 
 
             // 顯示 Toast 提示
