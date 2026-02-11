@@ -10,7 +10,11 @@
     
     <!-- Apple Touch Icon (iOS 主畫面圖標) -->
     <link rel="apple-touch-icon" href="logo.png">
-    
+    <!-- iPad 11 吋 (820 x 1180 points, 2x = 1640x2360) -->
+<link rel="apple-touch-startup-image" href="logo.png"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="logo.png"
+      media="(device-width: 1180px) and (device-height: 820px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
     <!-- iOS 設備主畫面圖標 (不同尺寸) -->
     <link rel="apple-touch-icon" sizes="57x57" href="logo.png">
     <link rel="apple-touch-icon" sizes="72x72" href="logo.png">
@@ -229,13 +233,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 錯誤提示 */
-        .error-message {
-            color: #EF4444;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
         .input-error + .error-message {
             display: block;
         }
@@ -1097,18 +1094,6 @@
                 document.getElementById('contractForm').addEventListener('input', () => {
                     this.saveDraft();
                 });
-                // 初始化 Supabase 客戶端
-                // 替換為你的 Supabase 專案 URL 和 anon key
-                this.supabase = supabase.createClient(
-                    'https://slkfbsvxoriqmwoeobop.supabase.co',
-                    'sb_publishable_DQs8LxhRWCms6OcCspB8Jw_Xnm97iBk'
-                );
-                
-                // 初始化圖標
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-
                 
                 // 設定今日日期
                 const today = new Date();
@@ -1427,32 +1412,64 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                 return new File([u8arr], filename, { type: mime });
             },
 
-            // 輔助函數：上傳簽名到 Supabase Storage
+            // ✅ 新增：縮小簽名圖片（避免 iPad 上傳失敗）
+            resizeDataUrl: function(dataUrl, maxWidth = 800, maxHeight = 300) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let w = img.width;
+                        let h = img.height;
+                        const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
+                        w = Math.round(w * ratio);
+                        h = Math.round(h * ratio);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, w, h);
+                        ctx.drawImage(img, 0, 0, w, h);
+
+                        resolve(canvas.toDataURL('image/png', 0.8));
+                    };
+                    img.src = dataUrl;
+                });
+            },
+
+            // 輔助函數：上傳簽名到 Supabase Storage（含重試）
             uploadSignatureToStorage: async function(base64Data) {
                 const file = this.dataURLtoFile(base64Data, `sign_${Date.now()}.png`);
-                // 檔名格式：signatures/時間戳記_亂數.png
-const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
 
-                try {
-                    // 上傳到 'signatures' bucket
-                    const { data, error } = await this.supabase
-                        .storage
-                        .from('signatures')
-                        .upload(fileName, file);
+                let lastError = null;
 
-                    if (error) throw error;
+                for (let i = 0; i < 3; i++) {
+                    try {
+                        const { data, error } = await this.supabase
+                            .storage
+                            .from('signatures')
+                            .upload(fileName, file, {
+                                contentType: 'image/png',
+                                cacheControl: '3600',
+                                upsert: false
+                            });
 
-                    // 取得公開網址
-                    const { data: { publicUrl } } = this.supabase
-                        .storage
-                        .from('signatures')
-                        .getPublicUrl(fileName);
+                        if (error) throw error;
 
-                    return publicUrl;
-                } catch (error) {
-                    console.error("簽名上傳失敗:", error);
-                    throw error; // 讓錯誤繼續往外拋，以便在 handleFormSubmit 捕獲
+                        const { data: { publicUrl } } = this.supabase
+                            .storage
+                            .from('signatures')
+                            .getPublicUrl(fileName);
+
+                        return publicUrl;
+                    } catch (err) {
+                        lastError = err;
+                        await new Promise(r => setTimeout(r, 800 * (i + 1))); // 重試延遲
+                    }
                 }
+
+                console.error("簽名上傳失敗 (重試後仍失敗):", lastError);
+                throw lastError;
             },
 
 
@@ -1566,32 +1583,37 @@ const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
             },
 
             // 確認簽名
-            confirmSignature: function() {
+            confirmSignature: async function() {
                 if (!this.signaturePad || this.signaturePad.isEmpty()) {
                     this.showToast('請先完成簽名再送出', 'error');
                     return;
                 }
 
-                // 1. 取得圖片數據
-                const dataUrl = this.signaturePad.toDataURL('image/png'); 
-                
-                // 2. 更新 UI 顯示
+                // 1. 取得原始圖片（用來顯示）
+                const dataUrl = this.signaturePad.toDataURL('image/png');
+
+                // 2. 取得縮小圖片（用來上傳）
+                const resizedDataUrl = await this.resizeDataUrl(dataUrl);
+
+                // 3. 更新 UI 顯示
                 const now = new Date();
                 const timeString = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-                
+
                 document.getElementById('sig-image').src = dataUrl;
                 document.getElementById('sig-timestamp').innerText = timeString;
-                document.getElementById('signature-data').value = dataUrl; // 存入隱藏欄位供表單提交用
 
-                // 3. 切換顯示狀態
+                // ✅ 存縮小後的圖進 hidden input
+                document.getElementById('signature-data').value = resizedDataUrl;
+
+                // 4. 切換顯示狀態
                 document.getElementById('btn-open-pad').classList.add('hidden');
                 document.getElementById('signature-result').classList.remove('hidden');
                 document.getElementById('btn-clear-result').classList.remove('hidden');
 
-// 4. 關閉 Modal (捲動邏輯已整合在 closeSignatureModal 內)
+                // 5. 關閉 Modal
                 this.closeSignatureModal();
-                
-                // 5. 觸發按鈕狀態檢查
+
+                // 6. 觸發按鈕狀態檢查
                 this.toggleSubmitBtn();
             },
 
@@ -1839,55 +1861,7 @@ const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
                 setTimeout(() => this.hideToast(toast), duration);
             },
 
-
-
-            // 顯示 Toast 提示
-            showToast: function(message, type = 'info') {
-                const toastContainer = document.getElementById('toast-container');
-                
-                // 創建 Toast 元素
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                
-                // 根據類型選擇圖標
-                let icon;
-                switch(type) {
-                    case 'success':
-                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-                        break;
-                    case 'error':
-                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
-                        break;
-                    case 'warning':
-                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
-                        break;
-                    default:
-                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
-                }
-                
-                // 設置 Toast 內容
-                toast.innerHTML = `
-                    <div class="toast-icon">${icon}</div>
-                    <div class="toast-message">${message}</div>
-                    <div class="toast-close">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </div>
-                `;
-                
-                // 添加關閉按鈕事件
-                toast.querySelector('.toast-close').addEventListener('click', () => {
-                    this.hideToast(toast);
-                });
-                
-                // 添加到容器
-                toastContainer.appendChild(toast);
-                
-                // 自動關閉
-                setTimeout(() => {
-                    this.hideToast(toast);
-                }, 5000);
-            },
-            
+           
             // 隱藏 Toast
             hideToast: function(toast) {
                 if (!toast) return;
@@ -2474,7 +2448,7 @@ showDownloadPage: function(contractData, hasEmail) {
                     window.addEventListener('load', async () => {
                         try {
 // 移除 Date.now()，否則每次重新整理瀏覽器都會認為是「新」的 Service Worker 而導致無限重整
-const registration = await navigator.serviceWorker.register('./sw.js');
+const registration = await navigator.serviceWorker.register('./sw.js?v=2');
 
                             // 2. 如果頁面一開啟就發現有在等待的更新 (之前下載好的)
                             if (registration.waiting) {
