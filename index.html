@@ -424,7 +424,7 @@
 
                 <a href="https://www.facebook.com/Hugbear.go/?locale=zh_TW" target="_blank" class="glass-panel p-4 flex items-center gap-4 group hover:border-[#1877F2]/50 hover:shadow-[0_4px_12px_rgba(24,119,242,0.15)] transition-all active:scale-[0.98]">
                     <div class="w-10 h-10 rounded-full bg-[#1877F2]/10 flex items-center justify-center shrink-0 group-hover:bg-[#1877F2] transition-colors">
-                        <i data-lucide="facebook" class="w-5 h-5 text-[#1877F2] group-hover:text-white transition-colors"></i>
+                        <img src="fb.svg" alt="Facebook" class="fb-icon">
                     </div>
                     <div class="flex-1">
                         <h3 class="font-bold text-theme-brown text-sm group-hover:text-[#1877F2] transition-colors">Facebook 粉絲專頁</h3>
@@ -2448,7 +2448,7 @@ showDownloadPage: function(contractData, hasEmail) {
                     window.addEventListener('load', async () => {
                         try {
 // 移除 Date.now()，否則每次重新整理瀏覽器都會認為是「新」的 Service Worker 而導致無限重整
-const registration = await navigator.serviceWorker.register('./sw.js?v=2');
+const registration = await navigator.serviceWorker.register('./sw.js?v=3');
 
                             // 2. 如果頁面一開啟就發現有在等待的更新 (之前下載好的)
                             if (registration.waiting) {
