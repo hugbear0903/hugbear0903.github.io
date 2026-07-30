@@ -482,8 +482,8 @@
     <div class="error-message">請輸入有效的電子信箱</div>
 </div>
                         <div>
-                            <label>身分證字號<span class="text-theme-orange">*</span></label>
-                            <input type="text" name="ownerId" class="input-minimal" required pattern="[A-Z][12]\d{8}">
+                            <label>身分證字號 <span class="text-theme-sub/50 text-xs font-normal">(非必填)</span></label>
+                            <input type="text" name="ownerId" class="input-minimal" pattern="[A-Z][12]\d{8}">
                             <div class="error-message">請輸入有效的身分證字號</div>
                         </div>
                         <div>
@@ -665,6 +665,20 @@
                                 </label>
                             </div>
                             <input type="text" name="medicalHistory" class="input-minimal" placeholder="若有，請簡述病史">
+                        </div>
+
+                        <div>
+                            <label>體內外驅蟲<span class="text-theme-orange">*</span></label>
+                            <div class="flex gap-2 radio-btn-group">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="deworming" value="yes" class="hidden" required>
+                                    <div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-400">是</div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="deworming" value="no" class="hidden">
+                                    <div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-400">否</div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1952,6 +1966,7 @@ friendly_to_dogs: formData.get('friendlyToDogs'),
                         dislike_touch: formData.get('dislikeTouch'),
                         
                         has_medical_history: formData.get('hasMedicalHistory'),                        medical_history: formData.get('medicalHistory'),
+                        deworming: formData.get('deworming'),
                         
                         check_eye: formData.get('check_eye'),
                         eye_description: formData.get('eyeDescription'),
@@ -2448,7 +2463,7 @@ showDownloadPage: function(contractData, hasEmail) {
                     window.addEventListener('load', async () => {
                         try {
 // 移除 Date.now()，否則每次重新整理瀏覽器都會認為是「新」的 Service Worker 而導致無限重整
-const registration = await navigator.serviceWorker.register('./sw.js?v=3');
+const registration = await navigator.serviceWorker.register('./sw.js?v=4');
 
                             // 2. 如果頁面一開啟就發現有在等待的更新 (之前下載好的)
                             if (registration.waiting) {
