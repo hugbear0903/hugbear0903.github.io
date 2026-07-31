@@ -680,6 +680,20 @@
                                 </label>
                             </div>
                         </div>
+
+                        <div>
+                            <label>疫苗施打<span class="text-theme-orange">*</span></label>
+                            <div class="flex gap-2 radio-btn-group">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="vaccination" value="yes" class="hidden" required>
+                                    <div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-400">是</div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="vaccination" value="no" class="hidden">
+                                    <div class="py-2 text-center border rounded-lg text-sm font-bold text-gray-400">否</div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -1179,6 +1193,25 @@
                 else btnBack.classList.remove('hidden');
             },
 
+            // ✅ 新增：返回首頁並重置表單
+            goHomeAndReset: function() {
+                // 先移除下載頁面 (如果存在的話)
+                const downloadView = document.getElementById('view-download');
+                if (downloadView) downloadView.remove();
+                
+                // 重置表單
+                this.resetForm();
+                
+                // 切換到首頁
+                this.router('home');
+                
+                // 顯示返回按鈕 (如果需要的話)
+                const btnBack = document.getElementById('btn-back');
+                if(btnBack) btnBack.classList.add('hidden');
+                
+                this.showToast('已返回首頁，可重新填寫契約', 'success');
+            },
+
             // 摺疊選單
             toggleAccordion: function(id) {
                 const el = document.getElementById(id);
@@ -1639,6 +1672,80 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                 document.getElementById('btn-clear-result').classList.add('hidden');
             },
 
+            // ✅ 新增：完整重置表單
+            resetForm: function() {
+                const form = document.getElementById('contractForm');
+                
+                // 1. 重置所有表單欄位
+                form.reset();
+                
+                // 2. 重置簽名
+                this.resetSignature();
+                
+                // 3. 重置提交按鈕
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50');
+                document.getElementById('submitBtnText').textContent = '確認並提交';
+                document.getElementById('submitBtnSpinner').classList.add('hidden');
+                
+                // 4. 重置「其他服務」輸入框 (隱藏並清空)
+                const otherServiceContainer = document.getElementById('other-service-input-container');
+                const otherServiceText = document.getElementById('other-service-text');
+                if (otherServiceContainer) otherServiceContainer.classList.add('hidden');
+                if (otherServiceText) otherServiceText.value = '';
+                document.getElementById('chk-other-service').checked = false;
+                
+                // 5. 重置「另行通知」按鈕狀態
+                const btnNotify = document.getElementById('btn-notify');
+                const timeInput = document.getElementById('timeInput');
+                if (btnNotify && btnNotify.classList.contains('bg-theme-orange')) {
+                    btnNotify.classList.remove('bg-theme-orange', 'text-white');
+                    btnNotify.classList.add('border-theme-brown/20', 'text-theme-brown');
+                    timeInput.type = 'time';
+                    timeInput.disabled = false;
+                    timeInput.classList.remove('opacity-50');
+                    timeInput.value = '';
+                }
+                
+                // 6. 重置晶片輸入框
+                const chipSelect = document.getElementById('chipSelect');
+                const chipInput = document.getElementById('chipInput');
+                if (chipSelect) chipSelect.value = 'has';
+                if (chipInput) {
+                    chipInput.classList.remove('hidden');
+                    chipInput.value = '';
+                }
+                
+                // 7. 重置「無信箱」勾選狀態
+                const noEmailCheck = document.getElementById('noEmailCheck');
+                if (noEmailCheck && noEmailCheck.checked) {
+                    noEmailCheck.checked = false;
+                    this.toggleNoEmail();
+                }
+                
+                // 8. 重置條款勾選
+                const termsCheck = document.getElementById('termsCheck');
+                if (termsCheck) termsCheck.checked = false;
+                
+                // 9. 清除所有錯誤樣式
+                form.querySelectorAll('.input-error, .group-error').forEach(el => {
+                    el.classList.remove('input-error', 'group-error');
+                });
+                form.querySelectorAll('.shake-error').forEach(el => el.classList.remove('shake-error'));
+                document.getElementById('btn-open-pad').classList.remove('border-red-500', 'animate-pulse');
+                
+                // 10. 移除偵錯按鈕
+                const debugBtn = document.getElementById('debug-report-btn');
+                if (debugBtn) debugBtn.remove();
+                
+                // 11. 清除草稿
+                localStorage.removeItem('hugbear_contract_draft');
+                
+                // 12. 清除最後契約資料
+                this.lastContractData = null;
+            },
+
             // 調整畫布尺寸 (處理 Retina 螢幕模糊問題)
             resizeCanvas: function() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -1700,6 +1807,7 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                     chipNumber: '晶片號碼',
                     medicalHistory: '過往病史描述',
                     payment: '支付方式',
+                    otherPayment: '其他支付方式',
                     amount: '支付金額',
                     sex: '性別',
                     neutered: '結紮',
@@ -1707,6 +1815,8 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                     friendlyToDogs: '親狗',
                     aggressive: '具攻擊性',
                     hasMedicalHistory: '過往病史',
+                    deworming: '體內外驅蟲',
+                    vaccination: '疫苗施打',
                     check_eye: '眼睛檢查',
                     check_ear: '耳朵檢查',
                     check_tooth: '牙齒檢查',
@@ -1730,6 +1840,44 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                 // --- 3. 進階邏輯驗證 ---
                 if (form.querySelectorAll('input[name="service"]:checked').length === 0) {
                     errors.push({ element: form.querySelector('input[name="service"]').closest('section'), friendlyName: '本次服務內容', reason: '必須至少選擇一項' });
+                }
+
+                // 驗證：體內外驅蟲是否已選取
+                if (!form.querySelector('input[name="deworming"]:checked')) {
+                    errors.push({ 
+                        element: form.querySelector('input[name="deworming"]').closest('div'), 
+                        friendlyName: '體內外驅蟲', 
+                        reason: '請選擇是否已進行體內外驅蟲' 
+                    });
+                }
+
+                // 驗證：疫苗施打是否已選取
+                if (!form.querySelector('input[name="vaccination"]:checked')) {
+                    errors.push({ 
+                        element: form.querySelector('input[name="vaccination"]').closest('div'), 
+                        friendlyName: '疫苗施打', 
+                        reason: '請選擇是否已施打疫苗' 
+                    });
+                }
+
+                // 驗證：支付方式是否已選取
+                if (!form.querySelector('input[name="payment"]:checked')) {
+                    errors.push({ 
+                        element: form.querySelector('input[name="payment"]').closest('.space-y-2'), 
+                        friendlyName: '支付方式', 
+                        reason: '請選擇一種支付方式' 
+                    });
+                }
+
+                // 驗證：如果選擇「其他」支付方式，必須填寫說明
+                const otherPaymentRadio = form.querySelector('input[name="payment"][value="其他"]');
+                const otherPaymentInput = form.querySelector('input[name="otherPayment"]');
+                if (otherPaymentRadio && otherPaymentRadio.checked && otherPaymentInput.value.trim() === '') {
+                    errors.push({ 
+                        element: otherPaymentInput, 
+                        friendlyName: '其他支付方式', 
+                        reason: '請輸入其他支付方式的名稱' 
+                    });
                 }
 
                 if (document.getElementById('chipSelect').value === 'has' && document.getElementById('chipInput').value.trim() === '') {
@@ -1967,6 +2115,7 @@ friendly_to_dogs: formData.get('friendlyToDogs'),
                         
                         has_medical_history: formData.get('hasMedicalHistory'),                        medical_history: formData.get('medicalHistory'),
                         deworming: formData.get('deworming'),
+                        vaccination: formData.get('vaccination'),
                         
                         check_eye: formData.get('check_eye'),
                         eye_description: formData.get('eyeDescription'),
@@ -2020,9 +2169,15 @@ friendly_to_dogs: formData.get('friendlyToDogs'),
                         });
                     }
 
-this.lastContractData = contractData; // 暫存資料給新視窗用
-                    this.showToast('契約已成功提交！', 'success');
-                    this.showDownloadPage(contractData, hasEmail);
+// 暫存資料給新視窗用 (同時存入 localStorage 以防頁面刷新)
+this.lastContractData = contractData;
+try {
+    localStorage.setItem('hugbear_last_contract', JSON.stringify(contractData));
+} catch (e) {
+    console.warn('儲存契約資料到 localStorage 失敗:', e);
+}
+this.showToast('契約已成功提交！', 'success');
+this.showDownloadPage(contractData, hasEmail);
                     
                     // 重置表單並清除暫存
                     document.getElementById('contractForm').reset();
@@ -2048,13 +2203,13 @@ showDownloadPage: function(contractData, hasEmail) {
         if(el) el.classList.add('hidden');
     });
     
-    // 顯示下載頁面視圖
-    const downloadView = document.getElementById('view-download');
-    
-    // 每次都重新創建內容，確保資料是最新的
-    if(downloadView) {
-        downloadView.remove(); // 移除舊的
+    // 移除可能殘留的下載頁面
+    const oldDownloadView = document.getElementById('view-download');
+    if (oldDownloadView) {
+        oldDownloadView.remove();
     }
+    
+    // 創建新的下載頁面
     this.createDownloadPage(contractData, hasEmail);
     
     // 隱藏返回按鈕
@@ -2063,6 +2218,9 @@ showDownloadPage: function(contractData, hasEmail) {
     
     // 捲動到頂部
     window.scrollTo({top: 0, behavior: 'smooth'});
+    
+    // ⚠️ 不要在這裡 resetForm，否則會影響下載頁面的顯示
+    // this.resetForm(); // 移除此行
 },
 // 創建結果/截圖引導頁面 (按鈕版)
             createDownloadPage: function(contractData, hasEmail) {
@@ -2078,11 +2236,11 @@ showDownloadPage: function(contractData, hasEmail) {
                 const alertBox = hasEmail
                     ? `<div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 text-sm text-blue-800 shadow-sm">
                          <div class="font-bold flex items-center gap-2 mb-2 text-lg"><i data-lucide="info" class="w-5 h-5"></i> 溫馨提醒</div>
-                         <p class="leading-relaxed">契約副本已寄至您的信箱。<br>建議您仍可點擊下方按鈕，開啟完整契約進行<strong>截圖備份</strong>。</p>
+                         <p class="leading-relaxed">契約副本已寄至您的信箱。<br>建議您點擊下方的「<strong>開啟完整契約</strong>」按鈕進行<strong>截圖備份</strong>。</p>
                        </div>`
                     : `<div class="bg-red-50 border-2 border-red-200 rounded-xl p-5 mb-6 text-sm text-red-800 animate-pulse shadow-md">
                          <div class="font-bold flex items-center gap-2 mb-2 text-lg"><i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i> 重要請注意</div>
-                         <p class="leading-relaxed font-bold text-base">因未填寫信箱，請務必點擊下方按鈕開啟契約，並立即截圖保存！</p>
+                         <p class="leading-relaxed font-bold text-base">因未填寫信箱，請務必點擊下方的「<strong>開啟完整契約</strong>」按鈕，並立即截圖保存！</p>
                          <p class="mt-2 text-xs opacity-80">(本頁面關閉後將無法再次查看)</p>
                        </div>`;
 
@@ -2112,7 +2270,7 @@ showDownloadPage: function(contractData, hasEmail) {
                             <span>開啟完整契約 (截圖保存)</span>
                         </button>
 
-                        <button onclick="app.router('home')" class="w-full bg-white text-theme-sub py-4 rounded-2xl font-bold shadow-sm border border-gray-200 flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-gray-50">
+                        <button onclick="app.goHomeAndReset()" class="w-full bg-white text-theme-sub py-4 rounded-2xl font-bold shadow-sm border border-gray-200 flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-gray-50">
                             <i data-lucide="home" class="w-5 h-5"></i>
                             <span>返回首頁 (完成)</span>
                         </button>
@@ -2127,25 +2285,42 @@ showDownloadPage: function(contractData, hasEmail) {
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             },
 // 新增：開啟完整契約內容 (新視窗)
-            openFullContract: function() {
-                if (!this.lastContractData) {
-                    this.showToast('無法讀取契約資料，請重新填寫', 'error');
-                    return;
-                }
+openFullContract: function() {
+    // 1. 先嘗試從記憶體讀取
+    let contractData = this.lastContractData;
+    
+    // 2. 如果記憶體沒有，從 localStorage 讀取
+    if (!contractData) {
+        try {
+            const saved = localStorage.getItem('hugbear_last_contract');
+            if (saved) {
+                contractData = JSON.parse(saved);
+                this.lastContractData = contractData;
+            }
+        } catch (e) {
+            console.warn('從 localStorage 讀取契約資料失敗:', e);
+        }
+    }
+    
+    // 3. 如果還是沒有，顯示錯誤
+    if (!contractData) {
+        this.showToast('無法讀取契約資料，請重新填寫', 'error');
+        return;
+    }
 
-                // 生成完整的 HTML
-                const content = this.generateEmailHTML(this.lastContractData);
-                
-                // 開啟新視窗
-                const newWin = window.open('', '_blank');
-                
-                if (newWin) {
-                    newWin.document.write(content);
-                    newWin.document.close(); // 確保瀏覽器停止加載並顯示內容
-                } else {
-                    this.showToast('彈出視窗被阻擋，請允許開啟視窗', 'warning');
-                }
-            },
+    // 生成完整的 HTML
+    const content = this.generateEmailHTML(contractData);
+    
+    // 開啟新視窗
+    const newWin = window.open('', '_blank');
+    
+    if (newWin) {
+        newWin.document.write(content);
+        newWin.document.close();
+    } else {
+        this.showToast('彈出視窗被阻擋，請允許開啟視窗', 'warning');
+    }
+},
 
 
 // 輔助函數：生成 Email HTML 內容
@@ -2275,8 +2450,11 @@ showDownloadPage: function(contractData, hasEmail) {
                                     <td style="border-bottom: 1px solid #eee;">
                                         結紮: ${mapBool(data.neutered)} / 親人: ${mapBool(data.friendly_to_people)} / 親狗: ${mapBool(data.friendly_to_dogs)}<br>
 <span style="color: #D98E4F;">攻擊性: ${mapBool(data.aggressive)}</span> / 
-                                        <span>敏感部位: <span style="color: ${data.dislike_touch ? '#D98E4F' : 'inherit'}; font-weight: bold;">${data.dislike_touch || '無'}</span></span> /
-                                        <span style="color: ${data.has_medical_history === 'yes' ? '#D98E4F' : 'inherit'};">病史: ${mapBool(data.has_medical_history)}</span>                                        ${data.medical_history ? `<br><span style="font-size:12px; color:#666;">(病史說明: ${data.medical_history})</span>` : ''}
+                                        <span>敏感部位: <span style="color: ${data.dislike_touch ? '#D98E4F' : 'inherit'}; font-weight: bold;">${data.dislike_touch || '無'}</span></span> / 
+                                        <span style="color: ${data.has_medical_history === 'yes' ? '#D98E4F' : 'inherit'};">病史: ${mapBool(data.has_medical_history)}</span> / 
+                                        <span>體內外驅蟲: ${mapBool(data.deworming)}</span> / 
+                                        <span>疫苗施打: ${mapBool(data.vaccination)}</span>
+                                        ${data.medical_history ? `<br><span style="font-size:12px; color:#666;">(病史說明: ${data.medical_history})</span>` : ''}
                                     </td>
                                 </tr>
 
@@ -2463,7 +2641,7 @@ showDownloadPage: function(contractData, hasEmail) {
                     window.addEventListener('load', async () => {
                         try {
 // 移除 Date.now()，否則每次重新整理瀏覽器都會認為是「新」的 Service Worker 而導致無限重整
-const registration = await navigator.serviceWorker.register('./sw.js?v=4');
+const registration = await navigator.serviceWorker.register('./sw.js?v=5');
 
                             // 2. 如果頁面一開啟就發現有在等待的更新 (之前下載好的)
                             if (registration.waiting) {

@@ -804,7 +804,8 @@ appearance: none;
                     { label: '敏感部位', key: 'dislike_touch', highlight: true, full: true }, 
                     { label: '病史', key: 'has_medical_history', highlight: '有' },
                     { label: '病史詳情', key: 'medical_history', full: true },
-                    { label: '體內外驅蟲', key: 'deworming' }
+                    { label: '體內外驅蟲', key: 'deworming' },
+                    { label: '疫苗施打', key: 'vaccination' }
                 ]
             },
             {
@@ -868,13 +869,15 @@ if (val !== '-') {
                     else if (f.key === 'sex') {
                         val = (val === 'male') ? '公' : (val === 'female') ? '母' : val;
                     }
-                    else if (f.key === 'neutered' || 
-                             f.key === 'friendly_to_people' ||
-                             f.key === 'friendly_to_dogs' || 
-                             f.key === 'has_medical_history' ||
-                             f.key === 'aggressive') { 
-                        val = (val === 'yes') ? '是' : (val === 'no') ? '否' : val;
-                    }
+else if (f.key === 'neutered' || 
+         f.key === 'friendly_to_people' ||
+         f.key === 'friendly_to_dogs' || 
+         f.key === 'has_medical_history' ||
+         f.key === 'aggressive' ||
+         f.key === 'deworming' ||
+         f.key === 'vaccination') { 
+    val = (val === 'yes') ? '是' : (val === 'no') ? '否' : val;
+}
                 }
 
 
@@ -1326,7 +1329,7 @@ const AppUtils = {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    const registration = await navigator.serviceWorker.register('./sw-admin.js?v=2');
+                    const registration = await navigator.serviceWorker.register('./sw-admin.js?v=3');
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         newWorker.addEventListener('statechange', () => {
