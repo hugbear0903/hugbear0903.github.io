@@ -965,19 +965,32 @@
                             <i data-lucide="chevron-right" class="w-4 h-4 text-theme-sub/30 group-hover:text-theme-brown transition-colors"></i>
                         </button>
 
-                        <label class="group relative flex items-center gap-3 p-4 cursor-pointer bg-theme-brown/[0.02] hover:bg-theme-brown/5 transition-colors select-none">
-                            <input type="checkbox" id="termsCheck" onchange="app.toggleSubmitBtn()" class="peer sr-only">
-                            
-                            <div class="w-5 h-5 flex-shrink-0 rounded border-2 border-theme-sub/40 bg-white peer-checked:bg-theme-brown peer-checked:border-theme-brown transition-all flex items-center justify-center shadow-sm peer-checked:[&_svg]:opacity-100">
-                                <i data-lucide="check" class="w-3.5 h-3.5 text-white opacity-0 transition-opacity stroke-[3]"></i>
+                        <div id="terms-status-area" class="flex items-center gap-3 p-4 bg-theme-brown/[0.02] transition-colors">
+                            <!-- 未同意狀態 -->
+                            <div id="terms-status-pending" class="flex items-center gap-3 w-full">
+                                <div class="w-5 h-5 flex-shrink-0 rounded border-2 border-theme-sub/40 bg-white flex items-center justify-center shadow-sm">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-white opacity-0 stroke-[3]"></i>
+                                </div>
+                                <span class="text-xs font-bold text-theme-sub leading-relaxed">
+                                    尚未閱讀並同意條款，請點擊上方「寵物美容定型化契約」閱讀
+                                </span>
                             </div>
 
-                            <span class="text-xs font-bold text-theme-sub leading-relaxed group-hover:text-theme-brown transition-colors">
-                                本人已詳閱並同意以上條款內容
-                            </span>
-                            
-                            <div class="absolute inset-0 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity border-2 border-theme-brown/20 rounded-b-xl"></div>
-                        </label>
+                            <!-- 已同意狀態 -->
+                            <div id="terms-status-agreed" class="hidden items-center justify-between w-full">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 flex-shrink-0 rounded bg-theme-brown border-2 border-theme-brown flex items-center justify-center shadow-sm">
+                                        <i data-lucide="check" class="w-3.5 h-3.5 text-white stroke-[3]"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-theme-brown leading-relaxed">
+                                        本人已詳閱並同意以上條款內容
+                                    </span>
+                                </div>
+                                <button type="button" onclick="app.cancelTermsAgreement()" class="text-[10px] font-bold text-red-400 hover:text-red-500 flex items-center gap-1 transition-colors shrink-0">
+                                    <i data-lucide="x" class="w-3 h-3"></i> 取消同意
+                                </button>
+                            </div>
+                        </div>
                     </div>                    
                     <div class="space-y-4 pt-4 border-t border-theme-brown/10" id="signature-section">
                         <div class="flex items-center justify-between">
@@ -1034,7 +1047,7 @@
         <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[85vh] animate-slide-up">
             <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-[#FFFBF0] rounded-t-2xl">
                 <h3 class="font-bold text-theme-brown flex items-center gap-2">
-                    <i data-lucide="scale" class="w-5 h-5"></i> 契約詳細條款
+                    <i data-lucide="scale" class="w-5 h-5"></i> 犬、貓美容服務定型化契約
                 </h3>
                 <button onclick="app.closeTermsModal()" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition">
                     <i data-lucide="x" class="w-4 h-4 text-gray-500"></i>
@@ -1047,20 +1060,153 @@
                         以上資料由飼主本人提供，並同意將資料內容提供於公司存續期間以電話、簡訊和寄發DM方式，提供相關活動或促銷訊息、或帶寵物到動物醫院留存相關資料使用。
                     </p>
                 </div>
-                <ol class="list-decimal pl-5 space-y-3 text-xs text-justify marker:font-bold marker:text-theme-brown">
-                    <li>除本契約另有約定、特殊緊急情況、或不可抗力之情況外，未經飼主同意，店家不得將寵物帶離美容場所(同上店家地址)、轉售、轉讓或以其他變相方法作為其他用途。</li>
-                    <li>飼主應於美容當日，將寵物領回，如經通知1日內未領回，依動保法第29條第一款通知主管機關，為飼主惡意棄養，相關罰金為3萬~15萬元，其他衍生性費用將跟飼主求償，例:人員加班費等。</li>
-                    <li>寵物發生攻擊行為，如因飼主未善盡告知義務而造成店內人員傷亡、財物損毀等費用，將全額向飼主(寵物占有權人)求償。</li>
-                    <li>店家應按本契約約定內容提供一定品質之美容服務。若因可歸責於店家或其受僱人之事由，導致其提供之美容服務有瑕疵，造成飼主發生損失的情況，飼主得要求減少價金或解除契約。</li>
-                    <li>本契約之任一方得隨時終止本契約，若因本契約之中止而生損害之一方得向他方請求賠償。</li>
-                    <li>於美容服務期間，如發現寵物有異常狀態，應立即通知飼主並妥善處理，如發生異常狀態的原因可歸責於店家之操作行為，店家應負損害賠償責任，例:摔傷寵物等。</li>
-                    <li>因本契約所生之訴訟，雙方合意以地方法院為管轄法院。</li>
-                    <li>美容契約相關法條，附件如店内張貼之公告，如有需求請自行拍照留存。</li>
-                </ol>
+
+                <div class="pt-2">
+                    <h4 class="font-bold text-theme-brown text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> 犬、貓美容服務定型化契約
+                    </h4>
+
+                    <div class="bg-theme-brown/5 rounded-xl p-3 mb-4 text-xs space-y-2">
+                        <p class="font-bold text-theme-brown">簽約注意事項</p>
+                        <p class="leading-relaxed">一、本契約之審閱期間不得少於1日。但單次或必要時，應給予即時或合理之審閱期間，審閱期間經雙方合議具結者不在此限。</p>
+                        <p class="leading-relaxed">二、乙方應於簽訂本契約前，提供「犬、貓美容服務簽約前詢問事項及基本資料表」（如附件），並由甲、乙雙方就相關內容共同填妥。乙方並應出示本定型化契約書空白文本，就其契約條款逐條向甲方為說明，使甲方充分瞭解其權利義務。</p>
+                        <p class="leading-relaxed">三、本契約雖為定型化契約之一種，甲、乙方仍得針對個別狀況，經雙方合意後，增、刪、修改內容。雙方不得以本契約內容為主管機關所定為由，主張無法修改，亦不得為有利於己之修正後，宣稱為政府機關版本，而主張不得修改。</p>
+                    </div>
+
+                    <ol class="list-decimal pl-5 space-y-4 text-xs text-justify marker:font-bold marker:text-theme-brown">
+                        <li>
+                            <span class="font-bold text-theme-brown">第一條（契約目的與範圍）</span><br>
+                            犬、貓美容服務，指提供犬、貓外表部位清洗或清潔、吹乾梳毛、毛髮修剪及造型設計等美容服務之行為。但不得涉及動物醫療行為及宣稱醫療效能。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第二條（資訊揭露義務）</span><br>
+                            乙方應至少以半開大小以上紙張或以電子方式，將犬、貓美容服務定型化契約公告於營業櫃台或場所明顯處；有設置網站或經營社群媒體者，並應於網頁明顯處公告。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第三條（寵物、甲方及乙方相關資料）</span><br>
+                            本契約應記載寵物、甲方及乙方之下列基本資料：<br>
+                            <span class="font-bold">(一) 寵物：</span>犬、貓之寵物登記晶片號碼或其他足以辨識個體身分之資訊。<br>
+                            <span class="font-bold">(二) 甲方：</span>姓名、通訊地址、聯絡電話、緊急聯絡人、緊急聯絡人之聯絡電話、犬、貓需緊急就醫時指定之獸醫診療場所。<br>
+                            <span class="font-bold">(三) 乙方：</span>公司或商號名稱、代表人或負責人姓名、營業地址、營業時間、聯絡電話、犬、貓需緊急就醫時如無指定，送交之獸醫診療場所。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第四條（服務內容之說明及確認）</span><br>
+                            乙方應將甲方所選擇之美容服務項目、期間、次數、有無約定指定服務人員、費用及其支付方式，於訂約前向甲方充分說明。<br>
+                            乙方應將實施之犬、貓美容服務內容製作紀錄，經甲方簽名確認後，提供正本予甲方留存。前項紀錄之提供及甲方確認之方式，乙方得以書面、電子或其他適當之方式為之。<br>
+                            乙方收取犬、貓美容服務費用，應開立憑證予甲方。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第五條（乙方詢問及照護義務）</span><br>
+                            乙方於實施犬、貓美容服務前，應向甲方詢問犬、貓個性、是否具攻擊性、有無疾病、病史等生理狀況或其他特殊須注意事項，並檢查犬、貓現況，以判斷是否合適接受犬、貓美容服務；<span class="font-bold text-theme-orange">甲方對於乙方之詢問應誠實告知，如有隱瞞致寵物或人員受損，甲方應自負全責。</span><br>
+                            前項詢問，應製作紀錄經甲方簽名確認後，提供正本予甲方留存。<br>
+                            前項紀錄之提供及甲方確認之方式，乙方得以書面、電子或其他適當之方式為之。<br>
+                            乙方於美容服務實施期間，應提供犬、貓安全、乾淨、通風、排水、適當與適量之遮蔽、照明及溫度之環境，並符合下列規定：<br>
+                            <span class="font-bold">(一)</span> 有提供食物或飲水時，應確保其適當、乾淨且無害。<br>
+                            <span class="font-bold">(二)</span> 以籠子、繩或鍊圈限制犬、貓活動時，其籠內空間應足供犬、貓充分伸展，其繩或鍊應長於犬、貓身形且足供其充分伸展及活動。<br>
+                            <span class="font-bold">(三)</span> 應避免犬、貓遭受騷擾、虐待或傷害。<br>
+                            <span class="font-bold">(四)</span> 有發生危害之虞時，應將犬、貓移置安全處，進行妥善照顧。<br>
+                            <span class="font-bold">(五)</span> 運輸接送犬、貓時，應注意其食物、飲水、排泄、環境及安全，並避免犬、貓遭受驚嚇、痛苦或傷害。<br>
+                            <span class="font-bold">(六)</span> 提供犬、貓其他妥善之照顧。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第六條（犬、貓於美容服務期間有異常狀況或死亡情形之處理）</span><br>
+                            於美容服務期間，乙方發現犬、貓實施美容部位或生理健康有異常狀況時，<span class="font-bold text-red-500">應立即妥善處理，嗣後並通知甲方或其指定之緊急聯絡人。</span><br>
+                            犬、貓有緊急就醫必要時，除立即通知甲方或其指定之緊急聯絡人外，乙方應優先將犬、貓送往甲方指定之獸醫診療機構；甲方未指定獸醫診療機構時，乙方應將犬、貓就近送往適當之獸醫診療機構，並將犬、貓就診之獸醫診療機構聯絡方式提供予甲方或其指定之緊急聯絡人。<br>
+                            <span class="font-bold text-red-500">犬、貓於美容服務期間死亡</span>，或有經乙方送往獸醫診療機構後死亡之情形，乙方應即通知甲方或其指定之緊急聯絡人，妥善保存犬、貓遺體，並向動物保護主管機關報備。甲方經通知後，當日未領回犬、貓遺體時，乙方至遲應於次日將犬、貓遺體交由動物保護主管機關處理。<br>
+                            發生第一項或前項之情形，為可歸責於乙方之事由所致者，<span class="font-bold text-red-500">乙方應負損害賠償及動物保護法相關責任。</span>
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第七條（甲方繳款方式）</span><br>
+                            甲方應負擔契約總金額之繳交方式如下：■現金。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第八條（犬、貓美容服務實施前，甲方任意解除契約之退費規定）</span><br>
+                            犬、貓美容服務實施前，甲方得隨時解除契約。<br>
+                            犬、貓美容服務實施前，因甲方任意解除本契約者，乙方應於解約日後三日內將已收取之費用扣除手續費後退還於甲方。<br>
+                            解約手續費之收取如下：■（一）不收取。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第九條（犬、貓美容服務實施後，甲方任意終止契約之退費規定）</span><br>
+                            犬、貓美容服務實施後，甲方得隨時終止契約。但單次服務，不適用之。<br>
+                            犬、貓美容服務實施後，因甲方任意終止本契約者，乙方應於終止日後三日內將已收取之費用扣除已接受美容服務費用及依前條第三項之手續費後退還於甲方。未依前條第三項約定手續費之金額時，乙方不得扣除手續費。<br>
+                            前項扣除已接受美容服務費用之計算方式如下：■（二）美容服務項目有差異時，扣除已接受美容服務之單價。但各筆單價不得超過本契約總費用百分之六十。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十條（可歸責於乙方，甲方解除或終止契約之退費規定）</span><br>
+                            乙方有下列事由之一者，未經甲方之同意，甲方得解除或終止本契約：<br>
+                            <span class="font-bold">(一)</span> 將本契約之全部或部分委由其分支機構或其他犬、貓美容服務業者代為履行。<br>
+                            <span class="font-bold">(二)</span> 變更服務地點。<br>
+                            <span class="font-bold">(三)</span> 變更甲方指定之犬、貓美容服務人員。<br>
+                            前項情形，乙方應於解除或終止後三日內退還相關費用予甲方；甲方另受有損害時，並應賠償。前項相關費用之計算，應以已收取之費用扣除前條第三項勾選計算之費用。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十一條（不可歸責於雙方，解除或終止契約之退費規定）</span><br>
+                            有下列事由之一者，契約雙方得於犬、貓美容服務實施前解除或實施後終止契約：<br>
+                            <span class="font-bold">(一)</span> 因天災、事變、政府法令等不可抗力或不可歸責於雙方當事人之事由，致不能履約。<br>
+                            <span class="font-bold">(二)</span> 犬、貓因死亡、疾病、健康情形不佳或抗拒接受美容服務，致難以繼續接受本契約之服務。<br>
+                            前項情形，乙方應依第八條或第九條規定退還費用予甲方。但不得扣除手續費。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十二條（甲方逾時接回犬、貓之處理方式）</span><br>
+                            乙方完成犬、貓美容服務後，甲方應依雙方約定時間接回犬、貓。<br>
+                            <span class="font-bold text-red-500">甲方接回犬、貓之時間已逾約定時間者</span>，乙方之處理方式如下：■（一）不收取逾時費。<br>
+                            甲方超過當日營業時間未接回犬、貓者，乙方應通知甲方或其緊急聯絡人；無法通知或經通知而未接回犬、貓時，乙方仍應善盡照顧之責，並得收取違約費（<span class="font-bold text-red-500">每小時逾時費乘以逾時時間，並加計百分之五計算之費用。每日最高不逾該次服務費用之三倍</span>）。<br>
+                            <span class="font-bold text-red-500">甲方逾三日未接回犬、貓者，乙方應通知動物保護主管機關依動物保護法相關規定處理。</span>
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十三條（不可歸責於甲方，未接回犬、貓之處理方式）</span><br>
+                            因天災、事變、政府法令等不可抗力或不可歸責於甲方之事由，致甲方無法於約定時間內接回犬、貓者，乙方應安置犬、貓。<br>
+                            乙方提出履行前項安置犬、貓已支付之必要費用並經核實者，得請求甲方償還。<br>
+                            於安置期間，發生就醫需要或死亡之情形，依第六條規定辦理。<br>
+                            第一項事由發生時，乙方最遲應於可正常通訊之次日通知動物保護主管機關知悉。事件原因消滅後，乙方應通知甲方或其指定之緊急聯絡人接回犬、貓，並依前條規定辦理。甲方當日未接回犬、貓時，乙方應於次日通知動物保護主管機關依動物保護法相關規定處理。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十四條（費用明確性原則）</span><br>
+                            本契約之總費用（包括所需商品、材料費、服務費及指定服務人員費）共計新臺幣○元。繳費項目應明列，未明列者，乙方不得向甲方收取。因繳費而獲得贈送之商品或服務（價值不得逾總費用百分之二十），於契約解除或終止時，乙方不得向甲方請求返還該贈品，亦不得向甲方主張應自返還之費用金額當中，扣除該贈之商品或服務價額。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十五條（預收犬、貓美容服務費用之履約保障）</span><br>
+                            乙方應就預收犬、貓美容服務費用百分之五十額度，提供履約保障。<span class="font-bold text-theme-orange">但契約期限一個月以內或按月收費或預收費用累計未消費金額在新臺幣一萬元以下者，得不提供之。</span>
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十六條（個人資料保護）</span><br>
+                            乙方因本契約而知悉或持有甲方之個人資料，應予保密並依個人資料保護法相關規定辦理，非經甲方書面同意，乙方不得對外揭露或為契約目的範圍外之利用；契約關係消滅後，亦同。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十七條（違約賠償）</span><br>
+                            因可歸責於當事人一方之事由違反本契約條款，致他方遭受損害，應負損害賠償責任。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十八條（履行輔助人）</span><br>
+                            就本契約之履行，經甲方同意將本契約之全部或部分委由其他犬、貓美容服務業者代為履行者，該受託犬、貓美容服務業者，視為乙方之代理人或使用人。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第十九條（申訴處理）</span><br>
+                            甲方對乙方提供之犬、貓美容服務有不滿意時，乙方應指派專人接受申訴。因本契約所生爭議，雙方應儘量以協商方式處理。甲方向所在地消費者保護官、消費爭議調解委員會、鄉（鎮、市、區）公所調解委員會申請調解時，乙方應配合前往辦理。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第二十條（管轄法院）</span><br>
+                            因本契約涉訟者，甲乙雙方同意以桃園地方法院為第一審管轄法院。但不得排除消費者保護法第四十七條或民事訴訟法第四百三十六條之九有關小額訴訟管轄法院之適用。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第二十一條（契約及其相關附件效力）</span><br>
+                            本契約自簽約日起生效，雙方各執一份契約正本。本契約廣告及相關附件視為本契約之一部分。
+                        </li>
+                        <li>
+                            <span class="font-bold text-theme-brown">第二十二條（其他約定事項）</span><br>
+                            <span class="font-bold text-red-500">飼主若未盡告知義務，致寵物發生攻擊行為造成店內人員傷亡或財物損毀，店家將依民法相關規定向飼主請求全額損害賠償。</span>
+                        </li>
+                    </ol>
+
+                </div>
             </div>
-            <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-                <button onclick="app.closeTermsModal()" class="w-full bg-theme-brown text-white py-3 rounded-xl font-bold hover:bg-theme-brownLight transition shadow-md">
-                    我已閱讀並了解 (關閉)
+            <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl space-y-2">
+                <button onclick="app.agreeTermsAndClose()" class="w-full bg-theme-brown text-white py-3 rounded-xl font-bold hover:bg-theme-brownLight transition shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    我已閱讀完畢並同意以上條款
+                </button>
+                <button onclick="app.closeTermsModal()" class="w-full bg-white text-theme-sub py-2.5 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 transition text-sm">
+                    先關閉，稍後再閱讀
                 </button>
             </div>
         </div>
@@ -1528,11 +1674,50 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                 document.getElementById('termsModal').classList.add('hidden');
             },
 
+            // 條款同意狀態
+            termsAgreed: false,
+
+            // 同意條款並關閉 Modal
+            agreeTermsAndClose: function() {
+                this.termsAgreed = true;
+                this.closeTermsModal();
+                this.updateTermsStatusUI();
+                this.toggleSubmitBtn();
+                this.showToast('已同意條款內容', 'success');
+            },
+
+            // 取消同意條款
+            cancelTermsAgreement: function() {
+                this.termsAgreed = false;
+                this.updateTermsStatusUI();
+                this.toggleSubmitBtn();
+                this.showToast('已取消同意，請重新閱讀條款', 'info');
+            },
+
+            // 更新條款狀態 UI
+            updateTermsStatusUI: function() {
+                const pending = document.getElementById('terms-status-pending');
+                const agreed = document.getElementById('terms-status-agreed');
+                if (!pending || !agreed) return;
+
+                if (this.termsAgreed) {
+                    pending.classList.add('hidden');
+                    pending.classList.remove('flex');
+                    agreed.classList.remove('hidden');
+                    agreed.classList.add('flex');
+                } else {
+                    pending.classList.remove('hidden');
+                    pending.classList.add('flex');
+                    agreed.classList.add('hidden');
+                    agreed.classList.remove('flex');
+                }
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+
             // 控制提交按鈕狀態的邏輯 
             toggleSubmitBtn: function() {
-                const isChecked = document.getElementById('termsCheck').checked;
                 const btn = document.getElementById('submitBtn');
-                if (isChecked) {
+                if (this.termsAgreed) {
                     btn.disabled = false;
                     btn.classList.remove('opacity-50');
                 } else {
@@ -1724,9 +1909,10 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                     this.toggleNoEmail();
                 }
                 
-                // 8. 重置條款勾選
-                const termsCheck = document.getElementById('termsCheck');
-                if (termsCheck) termsCheck.checked = false;
+                // 8. 重置條款同意狀態
+                this.termsAgreed = false;
+                this.updateTermsStatusUI();
+                this.toggleSubmitBtn();
                 
                 // 9. 清除所有錯誤樣式
                 form.querySelectorAll('.input-error, .group-error').forEach(el => {
@@ -1888,6 +2074,10 @@ this.setRadioValue('friendlyToDogs', data.friendly_to_dogs);
                     errors.push({ element: form.querySelector('input[name="medicalHistory"]'), friendlyName: '過往病史描述', reason: '選擇「有」時，描述為必填' });
                 }
                 
+                if (!this.termsAgreed) {
+                    errors.push({ element: document.getElementById('terms-status-area'), friendlyName: '條款同意', reason: '請先閱讀並同意條款內容' });
+                }
+
                 if (!document.getElementById('signature-data').value) {
                     errors.push({ element: document.getElementById('signature-section'), friendlyName: '數位簽名', reason: '尚未完成簽名' });
                 }
@@ -2323,7 +2513,7 @@ openFullContract: function() {
 },
 
 
-// 輔助函數：生成 Email HTML 內容
+            // 輔助函數：生成 Email HTML 內容
             generateEmailHTML: function(data) {
                 // 1. 資料格式化
                 const mapBool = (val) => val === 'yes' ? '是' : (val === 'no' ? '否' : val);
@@ -2427,7 +2617,7 @@ openFullContract: function() {
                                 <tr style="background-color: #f8f8f8;">
                                     <td colspan="2" style="border-bottom: 2px solid #eee; color: #8D6E63; font-weight: bold; padding-top: 20px;">🐾 寵物資料</td>
                                 </tr>
-<tr>
+                                <tr>
                                     <td style="border-bottom: 1px solid #eee; color: #888;">寵物名字</td>
                                     <td style="border-bottom: 1px solid #eee;">
                                         <span style="background:#eee; color:#555; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:4px;">
@@ -2435,7 +2625,8 @@ openFullContract: function() {
                                         </span>
                                         <strong style="font-size: 16px; color: #5D4037;">${data.pet_name}</strong>
                                     </td>
-                                </tr>                                <tr>
+                                </tr>
+                                <tr>
                                     <td style="border-bottom: 1px solid #eee; color: #888;">品種/特徵</td>
                                     <td style="border-bottom: 1px solid #eee;">
                                         ${data.breed} / ${data.color} / ${data.age}歲 / ${mapSex(data.sex)}
@@ -2449,7 +2640,7 @@ openFullContract: function() {
                                     <td style="border-bottom: 1px solid #eee; color: #888;">健康行為</td>
                                     <td style="border-bottom: 1px solid #eee;">
                                         結紮: ${mapBool(data.neutered)} / 親人: ${mapBool(data.friendly_to_people)} / 親狗: ${mapBool(data.friendly_to_dogs)}<br>
-<span style="color: #D98E4F;">攻擊性: ${mapBool(data.aggressive)}</span> / 
+                                        <span style="color: #D98E4F;">攻擊性: ${mapBool(data.aggressive)}</span> / 
                                         <span>敏感部位: <span style="color: ${data.dislike_touch ? '#D98E4F' : 'inherit'}; font-weight: bold;">${data.dislike_touch || '無'}</span></span> / 
                                         <span style="color: ${data.has_medical_history === 'yes' ? '#D98E4F' : 'inherit'};">病史: ${mapBool(data.has_medical_history)}</span> / 
                                         <span>體內外驅蟲: ${mapBool(data.deworming)}</span> / 
@@ -2493,18 +2684,36 @@ openFullContract: function() {
                             </div>
 
                             <div style="margin-bottom: 30px;">
-                                <h3 style="color: #5D4037; font-size: 14px; margin-bottom: 10px;">寵物美容定型化契約條款</h3>
+                                <h3 style="color: #5D4037; font-size: 14px; margin-bottom: 10px; border-left: 4px solid #D98E4F; padding-left: 10px;">犬、貓美容服務定型化契約條款</h3>
                                 <div style="font-size: 11px; color: #888; background-color: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; line-height: 1.8;">
+                                    <p style="margin: 0 0 10px 0; color: #5D4037; font-weight: bold;">簽約注意事項</p>
+                                    <p style="margin: 0 0 6px 0;">一、本契約之審閱期間不得少於1日。但單次或必要時，應給予即時或合理之審閱期間，審閱期間經雙方合議具結者不在此限。</p>
+                                    <p style="margin: 0 0 6px 0;">二、乙方應於簽訂本契約前，提供「犬、貓美容服務簽約前詢問事項及基本資料表」（如附件），並由甲、乙雙方就相關內容共同填妥。乙方並應出示本定型化契約書空白文本，就其契約條款逐條向甲方為說明，使甲方充分瞭解其權利義務。</p>
+                                    <p style="margin: 0 0 15px 0;">三、本契約雖為定型化契約之一種，甲、乙方仍得針對個別狀況，經雙方合意後，增、刪、修改內容。雙方不得以本契約內容為主管機關所定為由，主張無法修改，亦不得為有利於己之修正後，宣稱為政府機關版本，而主張不得修改。</p>
                                     <ol style="padding-left: 20px; margin: 0;">
-                                        <li>除本契約另有約定、特殊緊急情況、或不可抗力之情況外，未經飼主同意，店家不得將寵物帶離美容場所(同上店家地址)、轉售、轉讓或以其他變相方法作為其他用途。</li>
-                                        <li>飼主應於美容當日，將寵物領回，如經通知1日內未領回，依動保法第29條第一款通知主管機關，為飼主惡意棄養，相關罰金為3萬~15萬元，其他衍生性費用將跟飼主求償，例:人員加班費等。</li>
-                                        <li>寵物發生攻擊行為，如因飼主未善盡告知義務而造成店內人員傷亡、財物損毀等費用，將全額向飼主(寵物占有權人)求償。</li>
-                                        <li>店家應按本契約約定內容提供一定品質之美容服務。若因可歸責於店家或其受僱人之事由，導致其提供之美容服務有瑕疵，造成飼主發生損失的情況，飼主得要求減少價金或解除契約。</li>
-                                        <li>本契約之任一方得隨時終止本契約，若因本契約之中止而生損害之一方得向他方請求賠償。</li>
-                                        <li>於美容服務期間，如發現寵物有異常狀態，應立即通知飼主並妥善處理，如發生異常狀態的原因可歸責於店家之操作行為，店家應負損害賠償責任，例:摔傷寵物等。</li>
-                                        <li>因本契約所生之訴訟，雙方合意以地方法院為管轄法院。</li>
-                                        <li>美容契約相關法條，附件如店内張貼之公告，如有需求請自行拍照留存。</li>
-                                        <li style="color: #D98E4F; font-weight: bold; margin-top: 5px;">本人已詳閱並同意以上條款，且同意提供資料用於店家服務通知。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第一條（契約目的與範圍）</strong><br>犬、貓美容服務，指提供犬、貓外表部位清洗或清潔、吹乾梳毛、毛髮修剪及造型設計等美容服務之行為。但不得涉及動物醫療行為及宣稱醫療效能。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第二條（資訊揭露義務）</strong><br>乙方應至少以半開大小以上紙張或以電子方式，將犬、貓美容服務定型化契約公告於營業櫃台或場所明顯處；有設置網站或經營社群媒體者，並應於網頁明顯處公告。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第三條（寵物、甲方及乙方相關資料）</strong><br>本契約應記載寵物、甲方及乙方之下列基本資料：(一) 寵物：犬、貓之寵物登記晶片號碼或其他足以辨識個體身分之資訊。(二) 甲方：姓名、通訊地址、聯絡電話、緊急聯絡人、緊急聯絡人之聯絡電話、犬、貓需緊急就醫時指定之獸醫診療場所。(三) 乙方：公司或商號名稱、代表人或負責人姓名、營業地址、營業時間、聯絡電話、犬、貓需緊急就醫時如無指定，送交之獸醫診療場所。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第四條（服務內容之說明及確認）</strong><br>乙方應將甲方所選擇之美容服務項目、期間、次數、有無約定指定服務人員、費用及其支付方式，於訂約前向甲方充分說明。乙方應將實施之犬、貓美容服務內容製作紀錄，經甲方簽名確認後，提供正本予甲方留存。乙方收取犬、貓美容服務費用，應開立憑證予甲方。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第五條（乙方詢問及照護義務）</strong><br>乙方於實施犬、貓美容服務前，應向甲方詢問犬、貓個性、是否具攻擊性、有無疾病、病史等生理狀況或其他特殊須注意事項，並檢查犬、貓現況，以判斷是否合適接受犬、貓美容服務；<strong style="color: #D98E4F;">甲方對於乙方之詢問應誠實告知，如有隱瞞致寵物或人員受損，甲方應自負全責。</strong><br>乙方於美容服務實施期間，應提供犬、貓安全、乾淨、通風、排水、適當與適量之遮蔽、照明及溫度之環境。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第六條（犬、貓於美容服務期間有異常狀況或死亡情形之處理）</strong><br>於美容服務期間，乙方發現犬、貓實施美容部位或生理健康有異常狀況時，<strong style="color: #EF4444;">應立即妥善處理，嗣後並通知甲方或其指定之緊急聯絡人。</strong><br>犬、貓有緊急就醫必要時，除立即通知甲方或其指定之緊急聯絡人外，乙方應優先將犬、貓送往甲方指定之獸醫診療機構。<br><strong style="color: #EF4444;">犬、貓於美容服務期間死亡</strong>，或有經乙方送往獸醫診療機構後死亡之情形，乙方應即通知甲方或其指定之緊急聯絡人，妥善保存犬、貓遺體，並向動物保護主管機關報備。<br>發生第一項或前項之情形，為可歸責於乙方之事由所致者，<strong style="color: #EF4444;">乙方應負損害賠償及動物保護法相關責任。</strong></li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第七條（甲方繳款方式）</strong><br>甲方應負擔契約總金額之繳交方式如下：■現金。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第八條（犬、貓美容服務實施前，甲方任意解除契約之退費規定）</strong><br>犬、貓美容服務實施前，甲方得隨時解除契約。因甲方任意解除本契約者，乙方應於解約日後三日內將已收取之費用扣除手續費後退還於甲方。解約手續費之收取如下：■（一）不收取。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第九條（犬、貓美容服務實施後，甲方任意終止契約之退費規定）</strong><br>犬、貓美容服務實施後，甲方得隨時終止契約。但單次服務，不適用之。因甲方任意終止本契約者，乙方應於終止日後三日內將已收取之費用扣除已接受美容服務費用及依前條第三項之手續費後退還於甲方。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十條（可歸責於乙方，甲方解除或終止契約之退費規定）</strong><br>乙方有下列事由之一者，未經甲方之同意，甲方得解除或終止本契約：(一) 將本契約之全部或部分委由其分支機構或其他犬、貓美容服務業者代為履行。(二) 變更服務地點。(三) 變更甲方指定之犬、貓美容服務人員。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十一條（不可歸責於雙方，解除或終止契約之退費規定）</strong><br>因天災、事變、政府法令等不可抗力或不可歸責於雙方當事人之事由，或犬、貓因死亡、疾病、健康情形不佳或抗拒接受美容服務，致難以繼續接受本契約之服務者，契約雙方得於犬、貓美容服務實施前解除或實施後終止契約。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十二條（甲方逾時接回犬、貓之處理方式）</strong><br>乙方完成犬、貓美容服務後，甲方應依雙方約定時間接回犬、貓。<br><strong style="color: #EF4444;">甲方接回犬、貓之時間已逾約定時間者</strong>，乙方之處理方式如下：■（一）不收取逾時費。<br>甲方超過當日營業時間未接回犬、貓者，乙方應通知甲方或其緊急聯絡人；無法通知或經通知而未接回犬、貓時，乙方仍應善盡照顧之責，並得收取違約費（<strong style="color: #EF4444;">每小時逾時費乘以逾時時間，並加計百分之五計算之費用。每日最高不逾該次服務費用之三倍</strong>）。<br><strong style="color: #EF4444;">甲方逾三日未接回犬、貓者，乙方應通知動物保護主管機關依動物保護法相關規定處理。</strong></li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十三條（不可歸責於甲方，未接回犬、貓之處理方式）</strong><br>因天災、事變、政府法令等不可抗力或不可歸責於甲方之事由，致甲方無法於約定時間內接回犬、貓者，乙方應安置犬、貓。乙方提出履行前項安置犬、貓已支付之必要費用並經核實者，得請求甲方償還。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十四條（費用明確性原則）</strong><br>本契約之總費用(包括所需商品、材料費、服務費及指定服務人員費)共計新臺幣○元。繳費項目應明列，未明列者，乙方不得向甲方收取。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十五條（預收犬、貓美容服務費用之履約保障）</strong><br>乙方應就預收犬、貓美容服務費用百分之五十額度，提供履約保障。<strong style="color: #D98E4F;">但契約期限一個月以內或按月收費或預收費用累計未消費金額在新臺幣一萬元以下者，得不提供之。</strong></li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十六條（個人資料保護）</strong><br>乙方因本契約而知悉或持有甲方之個人資料，應予保密並依個人資料保護法相關規定辦理，非經甲方書面同意，乙方不得對外揭露或為契約目的範圍外之利用；契約關係消滅後，亦同。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十七條（違約賠償）</strong><br>因可歸責於當事人一方之事由違反本契約條款，致他方遭受損害，應負損害賠償責任。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十八條（履行輔助人）</strong><br>就本契約之履行，經甲方同意將本契約之全部或部分委由其他犬、貓美容服務業者代為履行者，該受託犬、貓美容服務業者，視為乙方之代理人或使用人。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第十九條（申訴處理）</strong><br>甲方對乙方提供之犬、貓美容服務有不滿意時，乙方應指派專人接受申訴。因本契約所生爭議，雙方應儘量以協商方式處理。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第二十條（管轄法院）</strong><br>因本契約涉訟者，甲乙雙方同意以桃園地方法院為第一審管轄法院。但不得排除消費者保護法第四十七條或民事訴訟法第四百三十六條之九有關小額訴訟管轄法院之適用。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第二十一條（契約及其相關附件效力）</strong><br>本契約自簽約日起生效，雙方各執一份契約正本。本契約廣告及相關附件視為本契約之一部分。</li>
+                                        <li style="margin-bottom: 10px;"><strong style="color: #5D4037;">第二十二條（其他約定事項）</strong><br><strong style="color: #EF4444;">飼主若未盡告知義務，致寵物發生攻擊行為造成店內人員傷亡或財物毀損，店家將依民法相關規定向飼主請求全額損害賠償。</strong></li>
+                                        <li style="color: #D98E4F; font-weight: bold; margin-top: 10px; list-style: none;">本人已詳閱並同意以上條款，且同意提供資料用於店家服務通知。</li>
                                     </ol>
                                 </div>
                             </div>
@@ -2641,7 +2850,7 @@ openFullContract: function() {
                     window.addEventListener('load', async () => {
                         try {
 // 移除 Date.now()，否則每次重新整理瀏覽器都會認為是「新」的 Service Worker 而導致無限重整
-const registration = await navigator.serviceWorker.register('./sw.js?v=5');
+const registration = await navigator.serviceWorker.register('./sw.js?v=6');
 
                             // 2. 如果頁面一開啟就發現有在等待的更新 (之前下載好的)
                             if (registration.waiting) {
